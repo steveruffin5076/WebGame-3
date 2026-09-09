@@ -882,14 +882,12 @@ These went beyond the approved plan. Each is reversible; say the word.
 
 | # | Addition | What it is | Why | Cost to remove |
 |---|---|---|---|---|
-| 1 | **Wick** | A light resource. Burns 1 per step deeper. At zero, the dark costs 1 HP per step | Gives depth a rising cost, so "go deeper" is a real decision instead of a free button | ~1 hour. Touches schema, run state and 2 events |
-| 2 | **"Take the pot"** in *Someone Else's Fire* | You may rob a woman who cannot stand up. +4 HP, +3 coin, −2 Heart, and a permanent flag | It is the sharpest "grim but warm" test in the five — warmth means nothing if cruelty is not on the menu | 10 minutes. Delete one choice block |
+| 1 | **Wick** | A light resource. Burns 1 per step deeper. At zero, the dark costs 1 HP per step | Gives depth a rising cost, so "go deeper" is a real decision instead of a free button | ✅ **Decided 2026-09-09: KEEP** — stays in the engine as built |
+| 2 | **"Take the pot"** in *Someone Else's Fire* | You may rob a woman who cannot stand up. +4 HP, +3 coin, −2 Heart, and a permanent flag | It is the sharpest "grim but warm" test in the five — warmth means nothing if cruelty is not on the menu | ✅ **Decided 2026-09-09: CUT** — removed from `roadside.json`. Event now has 3 choices |
 | 3 | **Zod at runtime** | Zod is **~30 kB of the 37 kB gzipped bundle** | Loud failures during content authoring | ✅ **Decided 2026-09-09: keep at runtime now, move to build-time at step 7** once the schema settles → bundle drops to roughly 7 kB gzipped |
 
 ## What I need from you to unblock step 4
 
 1. **The voice verdict.** Read the five events. Is the grimness landing without being miserable, and is the warmth landing without being soft? If it's close but off, name the event that's *closest* to right and I'll calibrate to that one rather than guessing.
-2. **Keep or cut the wick** (addition 1).
-3. **Keep or cut "Take the pot"** (addition 2).
 
-Addition 3 (Zod at runtime) is **resolved** — see table above.
+Additions 1–3 are all **resolved** — see table above. Wick stays, "Take the pot" is cut, Zod stays at runtime until step 7.
