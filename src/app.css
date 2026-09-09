@@ -1,0 +1,32 @@
+/* Scaffold styling only. The designed UI (framed panel, pixel art, animated
+   combat) is Phase 6 work and belongs to step 4 — not started. */
+:root {
+  --ink-0: #0b0a0c;
+  --ink-1: #17151a;
+  --ink-2: #241f27;
+  --ink-3: #383040;
+  --cool-4: #7a8c96;
+  --warm-4: #9c7a55;
+  --accent-blood: #8f1f2e;
+  --accent-torch: #e0913a;
+  --text: #e8e2d4;
+  --text-muted: #b5ad99;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ink-1);
+  color: var(--text);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+#app {
+  max-width: 65ch;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem calc(2rem + env(safe-area-inset-bottom));
+}

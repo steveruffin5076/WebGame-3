@@ -1,0 +1,388 @@
+[
+  {
+    "id": "the_tallow_man",
+    "title": "The Tallow Man",
+    "biome": "roadside",
+    "tags": ["trade", "quiet", "people"],
+    "weight": 3,
+    "illustration": "tallow_man.png",
+    "body": "He has set his stall where two bad roads meet, which tells you something about his judgement or about his desperation. Candles hang from the frame in bunches, pale and soft as things pulled out of a body. He is stirring a pot of fat over a low flame and does not look up when you approach.\n\n'Long road,' he says. 'Longer than it looks from the start of it.'\n\nThere is a child's shoe on the corner of the stall. It has been there long enough to gather dust. He does not explain it. You do not ask. Something passes between you anyway.\n\nHis candles are good — you can tell by the smell, clean, no bone in the render. Three coin each. He says the price like a man who expects to be argued with and has stopped minding either way.",
+    "choices": [
+      {
+        "label": "Buy a candle. Three coin.",
+        "hint": "Fair price, fairly asked.",
+        "requires": { "minCoin": 3 },
+        "whenLocked": "show",
+        "lockedReason": "You do not have three coin.",
+        "outcomes": [
+          {
+            "weight": 1,
+            "text": "He wraps it in waxed cloth without being asked and presses the fold down with his thumb, twice, the way you would tuck in something small. 'Burns clean,' he says. 'Burns slow. Don't waste it being brave.'",
+            "effects": [
+              { "kind": "coin", "amount": -3 },
+              { "kind": "wick", "amount": 5 }
+            ]
+          }
+        ]
+      },
+      {
+        "label": "Buy two, and pay him more than he asked.",
+        "hint": "He will notice. That is rather the point.",
+        "requires": { "minCoin": 8 },
+        "whenLocked": "hide",
+        "outcomes": [
+          {
+            "weight": 1,
+            "text": "He looks at the coin in his palm for a while. Then at you. Then he takes a third candle off the frame, a fat one, and puts it in with the others.\n\n'Don't,' he says, when you start to speak. 'Just take it and go on. Go on.'",
+            "effects": [
+              { "kind": "coin", "amount": -8 },
+              { "kind": "wick", "amount": 12 },
+              { "kind": "stat", "stat": "heart", "amount": 1 }
+            ]
+          }
+        ]
+      },
+      {
+        "label": "Ask about the shoe.",
+        "hint": "He may not want to answer. He may answer anyway.",
+        "whenLocked": "show",
+        "outcomes": [
+          {
+            "weight": 2,
+            "text": "'Ah,' he says, and keeps stirring. The fat turns over on itself, slow and white.\n\n'She'll want it back,' he says, 'when she comes past this way again.'\n\nHe stirs. You watch the road behind him, which is empty, and has clearly been empty a long time. When he speaks again his voice has gone flat and businesslike. 'Three coin. Or nothing. Either's fine.'",
+            "effects": [
+              { "kind": "stat", "stat": "heart", "amount": 1 },
+              { "kind": "flag", "set": "knows_the_tallow_man" }
+            ]
+          },
+          {
+            "weight": 1,
+            "text": "He puts the ladle down very carefully, as though it might go off.\n\n'You'll want to move along,' he says.\n\nHe does not raise his voice and he does not look up, and you find that you are already walking.",
+            "effects": [{ "kind": "flag", "set": "knows_the_tallow_man" }]
+          }
+        ]
+      },
+      {
+        "label": "Walk on.",
+        "hint": "The light you have is the light you keep.",
+        "whenLocked": "show",
+        "outcomes": [
+          {
+            "weight": 1,
+            "text": "You are twenty paces gone when he calls after you — not words, just a sound, the noise a man makes to be sure his voice still carries. You do not turn round.\n\nBehind you, the stirring starts again.",
+            "effects": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wolves_at_the_treeline",
+    "title": "Wolves at the Treeline",
+    "biome": "roadside",
+    "tags": ["danger", "beasts", "dusk"],
+    "weight": 3,
+    "illustration": "wolves.png",
+    "body": "They have been pacing you for a mile and pretending they have not. Four of them, strung along the treeline, ribs showing through winter coats. Whatever they were eating this year, they have finished it.\n\nThe lead one steps into the road ahead of you. It is not snarling. It is standing in the way with the patient look of an animal doing arithmetic.\n\nThis is not malice. That is what makes it bad. You cannot frighten off arithmetic.",
+    "choices": [
+      {
+        "label": "Stand tall. Make noise. Be the larger problem.",
+        "hint": "Works on things that have other options.",
+        "whenLocked": "show",
+        "outcomes": [
+          {
+            "weight": 2,
+            "text": "You roar at them. It is not dignified. It works — the lead one breaks first and the rest follow it into the trees, and you stand in the road shaking with your own noise still ringing off the rocks.\n\nYou were, it turns out, the larger problem.",
+            "effects": [{ "kind": "stat", "stat": "might", "amount": 1 }]
+          },
+          {
+            "weight": 3,
+            "text": "The lead one does not break. It comes low and fast and takes you at the thigh, and you get an elbow into its skull and it lets go, and then they are all gone at once, the way weather goes.\n\nYou sit down in the road. It is some time before you get up again.",
+            "effects": [{ "kind": "hp", "amount": -4 }]
+          }
+        ]
+      },
+      {
+        "label": "Give them your food and back away.",
+        "hint": "Two coin of dried meat. They are not hungry for you specifically.",
+        "requires": { "minCoin": 2 },
+        "whenLocked": "show",
+        "lockedReason": "You have nothing left to give them.",
+        "outcomes": [
+          {
+            "weight": 1,
+            "text": "You throw it wide and they go for it, and by the time the arguing starts you are eighty paces down the road and walking like a man who has remembered an appointment.\n\nBehind you, something yelps. Not you. That is all that matters tonight.",
+            "effects": [{ "kind": "coin", "amount": -2 }]
+          }
+        ]
+      },
+      {
+        "label": "Burn wick. Make yourself bright and terrible.",
+        "hint": "Costs light you will want later.",
+        "requires": { "minWick": 4 },
+        "whenLocked": "show",
+        "lockedReason": "You have not the light to spare.",
+        "outcomes": [
+          {
+            "weight": 1,
+            "text": "You put the flame to the whole bundle and hold it up, and for a moment you are the brightest thing in the valley.\n\nThey go. They go fast, and they go far, and one of them cries out as it runs, high and thin, like something that has been hurt rather than frightened.\n\nYou stand in the ruin of your own light and watch it burn down.",
+            "effects": [{ "kind": "wick", "amount": -4 }]
+          }
+        ]
+      },
+      {
+        "label": "Run for the treeline.",
+        "hint": "They are faster than you. They have always been faster than you.",
+        "whenLocked": "show",
+        "outcomes": [
+          {
+            "weight": 3,
+            "text": "You get eleven paces. Wolves are built almost entirely out of the ability to cover eleven paces.\n\nYou come out of it with your pack and most of your leg, and a lesson you will not need twice.",
+            "effects": [{ "kind": "hp", "amount": -6 }]
+          },
+          {
+            "weight": 1,
+            "text": "There is a drainage cut under the road that you did not know was there, and you are in it before your body has finished having the idea. Something scrabbles at the lip above you for a long minute and then thinks better of it.\n\nYou lie in the cold water and laugh, once, and hate the sound.",
+            "effects": [
+              { "kind": "hp", "amount": -1 },
+              { "kind": "stat", "stat": "wits", "amount": 1 }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "what_the_well_keeps",
+    "title": "What the Well Keeps",
+    "biome": "roadside",
+    "tags": ["greed", "ruin", "risk"],
+    "weight": 2,
+    "illustration": "well.png",
+    "body": "The well sits in the middle of a field with no house anywhere near it, which means there was a house once.\n\nSomeone has fitted a new rope to the winch. Recently. The hemp is still pale where the weather has not got at it yet.\n\nYou lean over. A long way down, something catches your light and gives a little of it back.\n\nGold does that. So does wet stone. So do eyes.",
+    "choices": [
+      {
+        "label": "Climb down the rope.",
+        "hint": "Someone hung a new rope here. Someone had a reason.",
+        "whenLocked": "show",
+        "outcomes": [
+          {
+            "weight": 2,
+            "text": "Coin. Old coin, a double handful of it, silted into a crack in the shaft wall where the bucket has been knocking it loose for years.\n\nYou come up filthy and grinning with your shirt bundled into a bag. Whoever hung the rope never got this far down. You decide not to work out why.",
+            "effects": [{ "kind": "coin", "amount": 14 }]
+          },
+          {
+            "weight": 2,
+            "text": "Halfway down the rope goes wrong — not breaking, worse, slipping, paying itself out through the winch in a long shriek of hemp.\n\nYou hit the water hard. It is not deep. That is the problem.\n\nGetting out takes an hour, and you leave a good deal of skin on the way.",
+            "effects": [{ "kind": "hp", "amount": -5 }]
+          },
+          {
+            "weight": 1,
+            "text": "There is a man down there, and he has been down there a while, and he is holding a lantern that has been out for longer than you have been alive.\n\nHe is wearing what you are wearing. Near enough.\n\nYou take the lantern. It seems important that someone should. You do not look at his face again on the way up, and you do not tell yourself why.",
+            "effects": [
+              { "kind": "item", "add": "drowned_lantern" },
+              { "kind": "wick", "amount": 6 },
+              { "kind": "stat", "stat": "heart", "amount": -1 },
+              { "kind": "flag", "set": "took_from_the_well" }
+            ]
+          }
+        ]
+      },
+      {
+        "label": "Lower the bucket and see what comes up.",
+        "hint": "Slower. Safer. Less.",
+        "whenLocked": "show",
+        "outcomes": [
+          {
+            "weight": 3,
+            "text": "Water, silt, and four coin gone green at the edges. Not a fortune. Not nothing.\n\nYou drink the water, because you are thirsty and because the alternative is being the sort of person who is too proud to.",
+            "effects": [
+              { "kind": "coin", "amount": 4 },
+              { "kind": "hp", "amount": 1 }
+            ]
+          },
+          {
+            "weight": 1,
+            "text": "The bucket comes up heavy and wrong. There is a shoe in it, small, and a great deal of dark hair, and you put the whole thing down on the stones very gently and walk away without emptying it.\n\nYou are a mile off before you stop checking behind you.",
+            "effects": [
+              { "kind": "stat", "stat": "wits", "amount": 1 },
+              { "kind": "flag", "set": "saw_the_bucket" }
+            ]
+          }
+        ]
+      },
+      {
+        "label": "Cut the rope.",
+        "hint": "For whoever comes next. They will never know.",
+        "whenLocked": "show",
+        "outcomes": [
+          {
+            "weight": 1,
+            "text": "It takes a while. It is a good rope and your blade is not what it was.\n\nWhen it goes, it goes all at once, and the winch spins free and clatters and then there is nothing but the field and the wind and a well that nobody can climb into any more.\n\nYou will never find out whether you were right. That is generally how it works.",
+            "effects": [
+              { "kind": "stat", "stat": "heart", "amount": 1 },
+              { "kind": "flag", "set": "cut_the_well_rope" }
+            ]
+          }
+        ]
+      },
+      {
+        "label": "Leave it.",
+        "hint": "It has waited this long.",
+        "whenLocked": "show",
+        "outcomes": [
+          {
+            "weight": 1,
+            "text": "You put your back to it and walk, and the field goes on being a field, and the well goes on being whatever a well is when nobody is looking into it.\n\nYou think about the rope for most of the next mile.",
+            "effects": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "someone_elses_fire",
+    "title": "Someone Else's Fire",
+    "biome": "roadside",
+    "tags": ["people", "kindness", "rest"],
+    "weight": 3,
+    "once": true,
+    "illustration": "the_fire.png",
+    "body": "You smell it before you see it — woodsmoke, and something with onions in it.\n\nThe fire is small and well made, built into a scrape of bank out of the wind by somebody who has done this a great many times. The somebody is a woman in her sixties with a bad leg stretched out in front of her and a pot balanced on three stones. She watches you come the whole way in. She does not reach for anything.\n\n'There's enough,' she says. 'There isn't much. But there's enough.'\n\nYou have been on this road four days. You have not heard a voice that was not your own since the second one.",
+    "choices": [
+      {
+        "label": "Sit. Eat. Say nothing.",
+        "hint": "She does not seem to need talking at.",
+        "whenLocked": "show",
+        "outcomes": [
+          {
+            "weight": 1,
+            "text": "It is onions and barley and something that was recently a bird. It is the best thing you have ever eaten and you both know that this says more about the road than about the cooking.\n\nYou sit until the fire goes low. Neither of you says a word. When you stand to go she lifts two fingers off her knee, which is a whole conversation, and you lift two back.",
+            "effects": [
+              { "kind": "hp", "amount": 4 },
+              { "kind": "stat", "stat": "heart", "amount": 1 }
+            ]
+          }
+        ]
+      },
+      {
+        "label": "Sit, and talk.",
+        "hint": "It has been four days.",
+        "whenLocked": "show",
+        "outcomes": [
+          {
+            "weight": 1,
+            "text": "Her name is Ilsabet. The leg was a cart, twelve years back, and she will tell you the whole story if you let her and she can tell that you will let her.\n\nSomewhere in the middle of it you realise you are laughing — properly, stupidly, at a joke about a bailiff that is not even very good.\n\nWhen you go she puts a twist of salt in your hand and folds your fingers over it and says, 'Mind how you go, then.' Nobody has said that to you in a long time.",
+            "effects": [
+              { "kind": "hp", "amount": 3 },
+              { "kind": "stat", "stat": "heart", "amount": 2 },
+              { "kind": "item", "add": "twist_of_salt" },
+              { "kind": "flag", "set": "met_ilsabet" }
+            ]
+          }
+        ]
+      },
+      {
+        "label": "Ask what is on the road ahead.",
+        "hint": "She has been sitting here a while. She has watched things go past.",
+        "whenLocked": "show",
+        "outcomes": [
+          {
+            "weight": 1,
+            "text": "'Bad,' she says, without any drama at all, the way you would report weather. 'Three days bad, then a bridge, then worse. There's a lampwright's post about a day on — roof's gone but the cellar's sound.'\n\nShe stirs the pot.\n\n'Eat first,' she says. 'It's not going anywhere and neither is the bad.'",
+            "effects": [
+              { "kind": "hp", "amount": 2 },
+              { "kind": "stat", "stat": "wits", "amount": 1 },
+              { "kind": "flag", "set": "knows_the_road_ahead" }
+            ]
+          }
+        ]
+      },
+      {
+        "label": "Take the pot.",
+        "hint": "She could not stop you. That is the whole of it.",
+        "whenLocked": "show",
+        "outcomes": [
+          {
+            "weight": 1,
+            "text": "She does not shout. She does not get up — she could not get up.\n\nShe watches you take it, and she watches you back away with it, and her face does not do anything at all, which is somehow very much worse than if it had.\n\nThe stew is good. You eat all of it about a mile down the road and then you sit in the dark for a while with the empty pot in your hands.",
+            "effects": [
+              { "kind": "hp", "amount": 4 },
+              { "kind": "coin", "amount": 3 },
+              { "kind": "stat", "stat": "heart", "amount": -2 },
+              { "kind": "flag", "set": "robbed_ilsabet" }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "the_long_room",
+    "title": "The Long Room",
+    "biome": "roadside",
+    "tags": ["rest", "quiet", "ruin"],
+    "weight": 2,
+    "illustration": "long_room.png",
+    "body": "The inn has no roof over the west end and no door at all, but the long room is dry and the chimney still draws.\n\nSomeone has stacked kindling by the hearth and left it there. Not hidden — left. The way you leave a thing for whoever comes next.\n\nThere is a name carved into the mantel, and under it four marks, and under those a fifth that was started and not finished.",
+    "choices": [
+      {
+        "label": "Sleep. Properly. All night.",
+        "hint": "Costs you the night. You will need the night later.",
+        "whenLocked": "show",
+        "outcomes": [
+          {
+            "weight": 1,
+            "text": "You wake to grey light coming through where the roof is not, and a cold hearth, and the first unbroken night you have had since you started.\n\nYour body has quietly put itself back together while you were not supervising. It does that, if you let it. You so rarely let it.",
+            "effects": [
+              { "kind": "hp", "amount": 5 },
+              { "kind": "wick", "amount": -2 }
+            ]
+          }
+        ]
+      },
+      {
+        "label": "Rest an hour. No more.",
+        "hint": "Less rest, less time.",
+        "whenLocked": "show",
+        "outcomes": [
+          {
+            "weight": 1,
+            "text": "An hour, by the burn of the wick. You do not lie down, because if you lie down you will not get up.\n\nIt helps. Not enough, but it helps, and you have made peace with not enough.",
+            "effects": [{ "kind": "hp", "amount": 2 }]
+          }
+        ]
+      },
+      {
+        "label": "Add a mark to the mantel.",
+        "hint": "Nobody will see it. Somebody might.",
+        "whenLocked": "show",
+        "outcomes": [
+          {
+            "weight": 1,
+            "text": "You finish the fifth mark first, which feels like the decent thing, and then you cut a sixth beside it.\n\nIt takes longer than you expect. The wood is hard and your knife is tired and by the end your hand aches, and you find that you are glad of the ache, and that you are not entirely sure why.\n\nSomeone will come after you. They will see six.",
+            "effects": [
+              { "kind": "stat", "stat": "heart", "amount": 1 },
+              { "kind": "flag", "set": "marked_the_mantel" }
+            ]
+          }
+        ]
+      },
+      {
+        "label": "Take the kindling and go.",
+        "hint": "It was left for whoever came next. You are whoever came next.",
+        "whenLocked": "show",
+        "outcomes": [
+          {
+            "weight": 1,
+            "text": "It bundles up small and burns clean and it will get you a good way further into the dark than you would have got otherwise.\n\nYou leave the long room cold. Somebody will arrive here tonight, out of the weather, and find a good chimney and nothing to put in it.\n\nYou tell yourself they will manage. People do.",
+            "effects": [
+              { "kind": "wick", "amount": 7 },
+              { "kind": "flag", "set": "took_the_kindling" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
