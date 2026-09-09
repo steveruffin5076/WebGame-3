@@ -9,7 +9,7 @@ Status:
 - [x] Phase 3 — Director interview
 - [x] Phase 4 — Popularity analysis of chosen game
 - [x] Phase 5 — Tools comparison
-- [ ] Phase 6 — Visual & animation direction
+- [x] Phase 6 — Visual & animation direction
 
 > **Source quality note.** Hard numbers below come from Sensor Tower, AzurGames,
 > PocketGamer.biz, Deconstructor of Fun and platform developer docs. Some
@@ -576,3 +576,201 @@ We are nowhere near any ceiling. That is a luxury this genre gives you.
 - [Cinevva — CrazyGames Developer Guide (2026)](https://app.cinevva.com/guides/publish-game-crazygames) (50 MB initial / 250 MB total / 1,500 file limits)
 
 ---
+
+## PHASE 6 — VISUAL & ANIMATION DIRECTION
+
+### 6.1 Three art directions, scored against the four criteria
+
+Phase 3 locked **Moody Pixel Art**. This section re-tests that choice properly against the criteria the brief demanded, so the decision is defensible rather than just early.
+
+| Criterion | **A. Moody Pixel Art** *(chosen)* | **B. Flat Vector Noir** | **C. Painted Gouache** |
+|---|---|---|---|
+| **AI-generation ease** | ★★★★★ Dedicated pixel tools exist (PixelLab is grid-aware for 16/32/64 and keeps clean palettes **[soft]**). Crucially, **low resolution hides generation artifacts** — you downsample and hand-fix, and imperfection reads as style | ★★☆☆☆ **Worst of the three.** AI generators are bad at clean flat vector; you end up tracing or hand-drawing. Cheapest to *render*, most expensive to *make* | ★★★★★ Easiest to generate — diffusion models excel at painterly output |
+| **Mobile performance** | ★★★★★ A 160×120 PNG is ~4–8 KB. Integer-scaled, no filtering cost | ★★★★★ SVG scales free; smallest payload of all | ★★★☆☆ Largest files by far. Soft gradients don't compress well; needs WebP/AVIF and careful budgeting |
+| **Genre fit (dark fantasy text RPG)** | ★★★★★ The default visual language of the genre. Instantly legible as "dungeon RPG" | ★★★☆☆ Reads modern/boardgame (Reigns, 80 Days). Clean, but fights "grim" | ★★★★★ Most emotionally rich. A single painting can carry a whole event |
+| **5-year trend alignment (Phase 2)** | ★★★★☆ Crowded aesthetic, but stable — pixel art has survived every trend cycle. Low-res is also the **safest posture against the AI backlash**: it looks authored | ★★★★☆ Distinctive, ages well, hardest to mistake for AI output | ★★☆☆☆ ⚠️ **This is exactly the look that gets accused of being AI-generated.** With 85% of players hostile to AI content **[data]**, painterly art is the direction that fights Phase 2 head-on |
+| **Verdict** | ✅ **Confirmed** | Strong but expensive in your time — the one resource you cannot buy | ❌ Rejected on trend risk, not on quality |
+
+**The decisive argument:** Painted gouache is the *prettiest* option and the *easiest* to generate, and those two facts are the problem. It is the maximum-slop-suspicion direction. Pixel art at low resolution is the only one of the three where AI assistance and authored appearance point the same way.
+
+---
+
+### 6.2 Full specification — Moody Pixel Art
+
+#### 6.2.1 Resolution and sprite sizes
+
+**Rule above all others: integer scaling only.** Author small, display at exactly 2×, 3× or 4×, with `image-rendering: pixelated`. Non-integer scaling turns pixel art to mush and is the single most common way this style gets ruined.
+
+| Asset | Native size | Display scale | Notes |
+|---|---|---|---|
+| **Event illustration** | **160 × 120** (4:3) | 2× mobile (320×240), 3× desktop (480×360) | The hero asset. One per event family, not one per event |
+| **Character portrait** (reacting) | **48 × 48** | 3× (144) / 4× (192) | Needs idle, hurt, low-HP and death states |
+| **Enemy sprite** | **64 × 64** | 3× (192) | Idle + attack + hurt + death |
+| **Item / status icons** | **16 × 16** | 2× (32) | Inventory, buffs, wounds |
+| **UI frame** | 9-slice, **8 px** corner unit | matches panel scale | Border, panels, buttons |
+| **Epitaph card** (export) | **800 × 1000** rendered | 1× | Composed at 4× from source sprites; sized for social posting |
+
+#### 6.2.2 Palette approach — 24 colours, hard-enforced
+
+A fixed master palette is what will make 300 separately-generated images look like **one game**. This is not a style preference; it is the thing that holds the project together visually.
+
+**Structure:** 6 ink + 6 cool + 6 warm + 3 accent + 3 UI.
+
+| Group | Hex values |
+|---|---|
+| **Ink ramp** (shadow, line, void) | `#0b0a0c` `#17151a` `#241f27` `#383040` `#55495c` `#7a6b80` |
+| **Cool ramp** (stone, steel, night, fog) | `#1c2430` `#2b3745` `#3d4d5c` `#566a78` `#7a8c96` `#a8b6bb` |
+| **Warm ramp** (skin, wood, leather, rope) | `#2a1e18` `#3f2c21` `#5a3f2c` `#7a583c` `#9c7a55` `#c2a179` |
+| **Accents** (use sparingly) | `#8f1f2e` blood/danger · `#e0913a` torch/hope · `#5f8f4a` poison/corruption |
+| **UI reserved** | `#e8e2d4` primary text · `#b5ad99` muted text · `#d94f4f` critical alert |
+
+**Three palette rules:**
+
+1. **One accent per illustration.** Everything else stays desaturated. This is the entire "moody" formula — it's why Darkest Dungeon reads the way it does. Two accents in one image and the mood collapses.
+2. **Backgrounds live in the bottom 30% of the value range.** Darkness is the default; light is an event.
+3. **Every generated asset gets quantized to this palette** in Aseprite before it ships. No exceptions. This is the pipeline step that converts "AI images" into "your game".
+
+Contrast: `#e8e2d4` on `#17151a` is a very high ratio, comfortably clearing WCAG AA for body text. The game is dark-theme-only by design, so contrast has to be verified deliberately rather than assumed.
+
+#### 6.2.3 Animation technique
+
+**Sprite sheets driven by CSS, not a JS render loop.** Horizontal strips, animated with `steps()` on `background-position`. This runs on the compositor, costs almost no CPU, and needs no engine — consistent with the Phase 5 stack.
+
+| Animation | Technique | Frames / timing |
+|---|---|---|
+| Portrait idle (breathing) | CSS `steps()` sprite strip | 4 frames @ 8 fps, looping |
+| Portrait hurt | Frame swap + 120 ms red flash overlay | 2 frames |
+| Portrait death | Sprite strip, plays once | 6 frames @ 10 fps |
+| Enemy attack | `transform: translateX()` lunge + shake keyframes on target | ~250 ms |
+| Damage numbers | DOM elements, Web Animations API (rise + fade) | ~600 ms |
+| Screen shake | `transform` on the panel container only | 200 ms, 3 px amplitude |
+| Torch flicker | CSS animation on a radial-gradient overlay's opacity, irregular 3–4 s loop | Cheapest mood-per-byte in the whole project |
+| Text reveal | Character-by-character typewriter, tap to skip to full | ~40 chars/sec |
+
+**Two hard performance rules:**
+- **Animate `transform` and `opacity` only.** Never animate `box-shadow`, `filter` or layout properties — they force repaints and will stutter on mid-tier phones.
+- **Honour `prefers-reduced-motion`.** Screen shake and the typewriter both become instant. This is an accessibility requirement, not a nicety.
+
+No GSAP needed. It stays optional, and its licence terms get verified before use if we ever reach for it.
+
+#### 6.2.4 UI/UX style for touch + mouse
+
+**The most important call in this section:** *the body text must not be a pixel font.* Pixel fonts are unreadable for 300-word passages on a phone, and your audience is mid-core readers. Pixel type is for headers, numbers and labels **only**.
+
+| Element | Specification |
+|---|---|
+| **Body text** | Readable serif (e.g. Lora, Bitter) at **17–18 px** minimum, line-height 1.6, max width **65ch** on desktop |
+| **Headers / stats / numerals** | Pixel font — this is where the retro identity lives |
+| **Choice buttons** | Full-width rows, **min-height 56 px**, **12 px gap** between them so a mis-tap can't select the wrong fate |
+| **Touch targets** | **48 × 48 px minimum**, everywhere, no exceptions |
+| **Mobile layout** | Illustration panel top → prose scrolls in the middle → choices **bottom-anchored** in the thumb-reach zone |
+| **Notch handling** | `env(safe-area-inset-bottom)` padding so the last choice is never under the home indicator |
+| **Hover** | Adds affordance on desktop, **never carries information**. Anything hover-only is invisible on a phone |
+| **Keyboard** | `1`–`4` select choices, `Space`/`Enter` advance, `Esc` menu |
+| **Theme** | Dark only, by design. Contrast ratios verified rather than assumed |
+
+---
+
+### 6.3 AI tools for asset generation
+
+**The workflow that actually ships** — generate, then finish by hand:
+
+> **1.** Generate the first direction with an AI tool → **2.** keep the strongest silhouette and palette, discard the rest → **3.** hand-edit the final frames in a pixel editor → **4.** quantize to the 24-colour master palette → **5.** export clean sprite sheets → **6.** view at true game size before accepting it. **[soft — this is the consensus production stack across 2026 tool round-ups]**
+
+| Tool | What it's for | Cost | Notes |
+|---|---|---|---|
+| **PixelLab** | Primary generator | Paid tiers | Grid-aware (16/32/64), generates consistent sprite sheets, maintains clean limited palettes. The most complete dedicated pixel tool in 2026 **[soft]** |
+| **Sprite AI** | Sprite variants + in-browser animation | Paid tiers | Generate → edit → animate → export without leaving the browser. Has an **Aseprite plugin** so you don't window-switch **[soft]** |
+| **ZSky AI** | Free workhorse | **Genuinely free, no ads on any tier** **[soft]** | Best zero-budget starting point. Clean grids, disciplined limited palettes, convincing 8/16-bit character work |
+| **LlamaGen PixelBox** | Character → sprite conversion | Freemium | Good for turning a concept into a usable sprite |
+| **Aseprite** | **Manual finishing — required** | ~$20 one-off | The industry standard. Palette quantization, sheet export, onion-skinning |
+| **LibreSprite** | Free Aseprite fork | Free | Use if the $20 isn't available yet. Fewer features, same core job |
+
+**Free asset libraries (backup and filler):**
+
+| Source | Licence | Use for |
+|---|---|---|
+| **Kenney** | **All CC0**, 40,000+ assets, no sign-up **[data]** | UI frames, icons, filler. Packs within a style family match each other |
+| **itch.io — CC0 + pixel-art tag** | CC0 (verify per pack) | Pixel Frog, Ansimuz, 0x72 release full CC0 packs **[soft]** |
+| **OpenGameArt** | ⚠️ **Mixed** — CC0, CC-BY *and GPL* | Deep archive, but **check the licence on every single asset**. GPL assets carry obligations you do not want |
+
+**Disclosure posture (from Phase 2):** with ~⅓ of Steam releases now carrying AI disclosures and 85% of players hostile **[data]**, the winning position is *AI-assisted, human-finished, honestly labelled*. Every asset passes through your hands and the palette filter. If asked, say so plainly. The backlash targets unedited generic output, not tool use.
+
+---
+
+### 6.4 Reference games
+
+| Game | What to study | What **not** to copy |
+|---|---|---|
+| **Darkest Dungeon** | **The mood target.** Value structure, single-accent discipline, oppressive darkness, and — most relevant to you — a narrator who finds humanity inside grimness. That is your "grim but warm" in practice | Its art is hand-painted at high resolution, not pixel art. Copy the *mood and palette discipline*, not the medium |
+| **Dead Cells** | **The resolution and animation target.** Crisp sprites that stay readable at small size, and exceptional animation economy — few frames, maximum readability | It's a fast action platformer. Its *pacing* is irrelevant to you |
+| **Fallen London** | **The layout target.** The proven answer to "how do you present a lot of prose in a browser and still feel like a game" — 4.5M words, browser-native, still running **[data]** | Its depth model (huge word count, long-term engagement, action refreshes) is the opposite of your 8–15 minute run. Also note only ~30–35% of its revenue comes from action refreshes — don't copy the energy meter |
+
+*Optional fourth:* **A Dark Room** — proof that a browser text game can break out on almost no art at all. Useful as a floor, not a target.
+
+---
+
+### Phase 6 sources
+
+- [LlamaGen — Best AI Pixel Art Generators in 2026](https://llamagen.ai/articles/best-ai-pixel-art-generators-2026)
+- [Sprite-AI — Best pixel art generators 2026, tested for game devs](https://www.sprite-ai.art/blog/best-pixel-art-generators-2026)
+- [ZSky AI — Best AI Pixel Art Tools 2026: 8 Tested + Ranked](https://zsky.ai/blog/best-ai-for-pixel-art)
+- [TECHSY — 7 Best AI Game Asset Generators (2026, Tested)](https://techsy.io/en/blog/best-ai-game-asset-generators)
+- [Cinevva — Best Free 2D Sprites, Pixel Art and Tilesets for Games (2026)](https://app.cinevva.com/guides/free-2d-sprites-tilesets)
+- [itch.io — Free game assets tagged CC0 + Pixel Art](https://itch.io/game-assets/free/tag-cc0/tag-pixel-art)
+- [Kenney Assets on itch.io](https://kenney-assets.itch.io/pixel-platformer)
+- [AssetHoard — 15 Best Free HD Game Asset Sites in 2026](https://assethoard.com/blog/where-to-find-free-game-assets-2026)
+- [Failbetter Games — Fallen London](https://www.failbettergames.com/games/fallen-london)
+
+---
+
+# SUMMARY OF DECISIONS & NEXT STEPS
+
+## Decisions made
+
+| Area | Decision |
+|---|---|
+| **Game** | Run-based text adventure RPG with pixel-art event illustrations, choices, combat, multiple endings, score ranking |
+| **Verdict** | **BUILD — with modifications.** Scores 6.1/10 today, 6.7/10 over 5 years; ~7.6 today with the three Phase 4 changes |
+| **Audience** | Adults 18–34, mid-core readers, US / English-first |
+| **Session** | 8–15 minute permadeath runs; 2–3 stack into a 30-minute sitting |
+| **Tone** | Grim but warm — dangerous world, real losses, dry humour, NPCs worth mourning |
+| **Art** | Moody Pixel Art: 160×120 illustrations, 24-colour master palette, integer scaling only |
+| **Type** | Readable serif for prose (17–18 px); pixel font for headers and numbers only |
+| **Animation** | CSS `steps()` sprite sheets + Web Animations API. `transform`/`opacity` only |
+| **Stack** | TypeScript · Vite · **Svelte 5** · DOM text · CSS sprite animation · Canvas 2D for card export · JSON events + Zod · localStorage · Vitest · GitHub Pages · CrazyGames SDK behind an adapter |
+| **No engine** | Phaser 4 rejected (text-in-canvas + four months old). Kaplay rejected (alpha). No 3D |
+| **Three required additions** | **Daily Delve** (seeded daily run + leaderboard) · **3-second visual legibility** (framed panel, reacting portrait, animated combat) · **Epitaph card** (shareable PNG on death) |
+| **Monetization** | Rewarded video **between runs only**, opt-in, never mid-prose. Ads-first; CrazyGames IAP must be earned |
+| **Distribution** | itch.io + own PWA on GitHub Pages = base case. Portal acceptance = upside, not the plan |
+| **First build** | Vertical slice: 1 biome, 40–60 tagged events, 1 enemy tier, 3 classes, 2 endings, full run loop, + the three additions. Feature list **fixed**, date is a **target** |
+| **v1 non-goals** | No multiplayer · no server · no accounts · no localization · no UGC · no IAP · no 3D |
+
+## Open risks to watch
+
+1. **Portals may never feature a text game** — mitigated by not depending on them.
+2. **Repetition** — the complaint that sank the competitor. Mitigated by combinatorial tagged events, decided in week 1.
+3. **Writing volume is the bottleneck** — 60,000–200,000 words for a full game. Not a code problem.
+4. **AI-writing perception** — you edit every event; disclose honestly.
+
+## Next steps — awaiting your approval
+
+Per the brief, **no game code has been written and none will be until you approve this plan.**
+
+On approval, the build order is:
+
+1. **Scaffold** — Vite + Svelte 5 + TypeScript, GitHub Pages deploy via Actions. Verify a blank page ships to a live URL first.
+2. **Run engine** — seeded PRNG (`mulberry32`), event loader, Zod schema, run state machine. **Vitest proves determinism before any content exists.**
+3. **Event schema + 5 sample events** — you read them and judge the voice. **This is your first real go/no-go gate.**
+4. **UI shell** — illustration panel, prose area, bottom-anchored choices, HUD. Touch + keyboard.
+5. **Combat** — the one system that must feel good, not just work.
+6. **Art pipeline** — generate the first 5 illustrations, quantize to the palette, confirm the look at true size on a phone.
+7. **Content pass** — scale to 40–60 events.
+8. **Daily Delve + epitaph card.**
+9. **Ad adapter + portal build.**
+
+**Three things I need from you before step 1:**
+
+- ✅ **Approve or amend this plan.**
+- 🎲 **A working title** — needed for the repo, the PWA manifest and the epitaph card.
+- ✍️ **A decision on step 3's gate:** how many sample events do you want to read before I scale up content? My recommendation is 5.
