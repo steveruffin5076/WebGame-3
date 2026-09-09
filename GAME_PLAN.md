@@ -8,7 +8,7 @@ Status:
 - [x] Phase 2 — 5-year prediction
 - [x] Phase 3 — Director interview
 - [x] Phase 4 — Popularity analysis of chosen game
-- [ ] Phase 5 — Tools comparison
+- [x] Phase 5 — Tools comparison
 - [ ] Phase 6 — Visual & animation direction
 
 > **Source quality note.** Hard numbers below come from Sensor Tower, AzurGames,
@@ -434,5 +434,145 @@ Ordered by expected damage.
 - [Cinevva — CrazyGames Developer Guide (2026)](https://app.cinevva.com/guides/publish-game-crazygames) (60% ad / 70% IAP split, invite-only IAP)
 - Phase 1 and Phase 2 sources above (portal rankings, eCPM rates, AI-sentiment data, demographic data)
 - ⚠️ Deliberately **not** used for scoring: [Growth Market Reports — Interactive Fiction Market](https://growthmarketreports.com/report/interactive-fiction-market) and [openPR — Text Adventure Games Market](https://www.openpr.com/news/4425020/text-adventure-games-market-set-for-robust-growth-targeting) — mutually contradictory report-mill figures, listed only for transparency
+
+---
+
+## PHASE 5 — COMPLETE TOOLS COMPARISON
+
+**What we are building for:** a text-heavy run-based RPG. Roughly **90% of the screen is prose, choice buttons and stat readouts**; ~10% is a pixel-art illustration panel with a reacting portrait and animated combat. PC + mobile browser. Static hosting. $0.
+
+> **How to read the "AI-reliability" column.** The brief asked me to weight learning curve by how well AI assistants handle each framework. That column is **my honest self-assessment of how reliably I can generate correct code**, and the dominant factor is *how much of the training corpus covers the current major version*. A framework that shipped a breaking major release four months ago is a real hazard: I will confidently write last-version APIs. This is judgement, not measurement — but it is the single most under-rated factor in your stack choice, because I am the one typing.
+
+Ratings: ★★★★★ = best, ★☆☆☆☆ = worst.
+
+---
+
+### 5.1 Rendering / game-engine layer
+
+| Option | Current version (2026) | Free hosting | AI-reliability for me | Learning curve for YOU | Mobile browser perf | Docs / community | AI asset pipeline | Fit for THIS game |
+|---|---|---|---|---|---|---|---|---|
+| **Phaser 4** | v4.1 "Salusa", 30 Apr 2026 **[data]** | ★★★★★ static | ★★☆☆☆ **v4 is ~4 months old.** My training is dominated by **Phaser 3**, so I will drift into v3 APIs. Real, recurring bug source | ★★☆☆☆ | ★★★★★ Best Safari performance of the frameworks benchmarked **[soft]** | ★★★★★ Largest 2D web-game community | ★★★★★ Sprite sheets, atlases, Tiled | ⚠️ **Overkill and wrong-shaped.** Renders text to canvas — you lose text selection, native scrolling, accessibility and crisp mobile font rendering. That is the *majority* of your game |
+| **PixiJS v8** | v8.7+, WebGPU-first; ~⅓ Phaser's bundle **[data]** | ★★★★★ static | ★★★★☆ v8 well-established | ★★★☆☆ | ★★★★★ Fastest raw 2D renderer available | ★★★★☆ | ★★★★★ Excellent sprite-sheet handling | ✅ **Good as a small canvas island** for combat FX only. It is a renderer, not an engine — no state, no scenes |
+| **Kaplay** | 4000.0.0-alpha.16 **[data]** | ★★★★★ static | ★☆☆☆☆ **Alpha, plus a rename from Kaboom.js.** Worst possible training-data situation | ★★★☆☆ pleasant API | ★★★☆☆ | ★★☆☆☆ | ★★★★☆ | ❌ Avoid. Alpha software for a project you need to maintain for months |
+| **Excalibur.js** | stable, TypeScript-native | ★★★★★ static | ★★★☆☆ Smaller corpus | ★★★☆☆ | ★★★★☆ | ★★★☆☆ | ★★★★☆ | ➖ Fine engine, no advantage here. Same text-on-canvas problem as Phaser |
+| **Plain Canvas 2D API** | browser built-in | ★★★★★ static | ★★★★★ Universal, stable for a decade | ★★☆☆☆ | ★★★★★ Zero overhead | ★★★★★ MDN | ★★★★☆ Manual | ✅ **Yes — for the epitaph card export.** Draw once, `toDataURL()`, done |
+| **Three.js** | stable, WebGPU renderer shipping | ★★★★★ static | ★★★★☆ | ★☆☆☆☆ | ★★★☆☆ | ★★★★★ | ★★★☆☆ 3D models | ❌ 3D is an explicit v1 non-goal |
+| **Babylon.js** | stable | ★★★★★ static | ★★★★☆ | ★☆☆☆☆ | ★★★☆☆ | ★★★★☆ | ★★★☆☆ | ❌ Same |
+| **PlayCanvas** | stable, editor-based | ★★★★☆ (self-host export) | ★★★☆☆ | ★★☆☆☆ | ★★★★☆ | ★★★☆☆ | ★★★☆☆ | ❌ Same, plus editor lock-in |
+
+**Conclusion for this layer:** *no game engine.* A text RPG's core is a state machine and a lot of DOM text. Putting that in a canvas engine costs you accessibility, text selection, mobile font quality and native scrolling — and buys you nothing you need.
+
+---
+
+### 5.2 UI / application layer (where this game actually lives)
+
+| Option | Current version (2026) | Runtime size | Free hosting | AI-reliability for me | Learning curve for YOU | Mobile perf | Docs / community | Fit |
+|---|---|---|---|---|---|---|---|---|
+| **Svelte 5** | 5.55.10 **[data]** | **2–5 KB gzip** **[data]** | ★★★★★ | ★★★★☆ Runes (`$state`, `$derived`) are newer syntax; I occasionally slip into Svelte 4 patterns. **Mitigable** by pinning the version and reviewing | ★★★★★ **`.svelte` files read like an HTML file with a script tag.** You can open one and understand it | ★★★★★ Compiled, no virtual DOM | ★★★★☆ | ✅ **Recommended** |
+| **React 19** | 19.2.6 **[data]** | **~42 KB gzip** **[data]** | ★★★★★ | ★★★★★ **Best of any framework** — largest training corpus by far | ★★☆☆☆ JSX + hooks + effect rules are genuinely hard to read for a non-programmer | ★★★★☆ | ★★★★★ Largest ecosystem | ➖ **The safe runner-up.** Pick this if AI-reliability matters more to you than readability |
+| **Vue 3** | stable | ~16 KB gzip | ★★★★★ | ★★★★☆ | ★★★★☆ SFCs are readable | ★★★★☆ | ★★★★☆ | ➖ Fine. No decisive advantage |
+| **Plain TypeScript + DOM** | — | **0 KB** | ★★★★★ | ★★★★★ | ★★★☆☆ Readable, but there is more of it | ★★★★★ | ★★★★★ | ➖ Zero framework risk, but I hand-roll reactivity — more bespoke code to maintain over months |
+| **Angular** | stable | large | ★★★★★ | ★★★★☆ | ★☆☆☆☆ | ★★★☆☆ | ★★★★☆ | ❌ Enterprise weight, wrong tool |
+
+**The real tradeoff, stated plainly:** React is the version I write most reliably; Svelte is the version *you* can read. The bundle difference (~40 KB) is irrelevant — CrazyGames permits a **50 MB initial download** **[data]**, so we are three orders of magnitude under either way. **I recommend Svelte because your ability to open a file and understand it is worth more than my marginal error rate, which is correctable by review.**
+
+---
+
+### 5.3 Multiplayer / backend (not needed for v1 — recorded for completeness)
+
+v1 non-goals include no server and no accounts. This matters only if the Daily Delve leaderboard goes from local to global.
+
+| Option | What it's for | Free tier reality | Verdict |
+|---|---|---|---|
+| **localStorage** | v1 saves + local daily leaderboard | Free forever, no server | ✅ **v1** |
+| **Cloudflare Workers + D1/KV** | Hosted daily leaderboard, score submission | Generous free tier, **no cold starts**, edge-deployed | ✅ **Best v2 upgrade path** |
+| **Supabase** | Leaderboard + optional accounts | Free tier, Postgres, pauses when idle | ➖ Viable, heavier than needed |
+| **Render / Fly.io free tier** | General app server | **Cold starts** on free tier — a leaderboard that takes 30s to wake is worse than no leaderboard | ➖ Named in your brief, but Workers beat it for this job |
+| **Colyseus** | Authoritative real-time multiplayer rooms | Needs an always-on server | ❌ Real-time; irrelevant here |
+| **Socket.io** | WebSocket transport | Needs a server | ❌ Same |
+| **PartyKit** | Edge real-time collaboration | Free tier | ❌ Same |
+
+---
+
+### 5.4 Supporting tools
+
+| Tool | Job | Why |
+|---|---|---|
+| **TypeScript** | Language | You already know basics. Catches content-schema errors at build time |
+| **Vite** | Build + dev server | Standard in 2026 across React/Vue/Svelte stacks **[data]**. Instant HMR, static output |
+| **Zod** | Validate event JSON at load | With 300–500 hand-written events, a typo in one file must fail loudly, not silently produce a broken run |
+| **Vitest** | Test the run engine | **Critical:** Daily Delve requires a *deterministic seeded RNG*. Same seed must produce an identical run, on every device, forever. That needs tests |
+| **`mulberry32` / `xoshiro128**`** | Seeded PRNG | ⚠️ **Never `Math.random()`** — it cannot be seeded, which breaks the Daily Delve entirely |
+| **GitHub Actions** | Deploy to Pages on push | Free, already where your code lives |
+| **CrazyGames HTML5 v2 SDK** | Rewarded + midgame ads | `CrazySDK.ad.requestAd()` with `adError` / `adStarted` / `adFinished` callbacks. **Only SDK-requested ads are permitted** **[data]** |
+| **Poki SDK** | Alternative portal | Uses `commercialBreak` / `rewardedBreak` — conceptually identical to CrazyGames **[data]**, so a thin adapter lets us support both |
+| **CSS + Web Animations API** | UI motion, sprite-sheet frames via `steps()` | Free, native, GPU-accelerated, zero bundle |
+| **GSAP** | Optional tweening | Only if CSS proves insufficient. ⚠️ Verify current licence terms before shipping — do not assume |
+
+**Platform constraints to build against** (CrazyGames, **[data]**):
+
+| Constraint | Limit | Our expected size |
+|---|---|---|
+| Initial download | ≤ 50 MB | ~1–3 MB |
+| Total build (with SDK) | ≤ 250 MB (≤50 MB without SDK) | ~2–5 MB |
+| File count | ≤ 1,500 files | ~100–300 |
+| Midgame ad frequency | max 1 per 3 min, auto-managed | We use **rewarded only**, between runs |
+
+We are nowhere near any ceiling. That is a luxury this genre gives you.
+
+---
+
+### 5.5 ✅ THE RECOMMENDED STACK
+
+| Layer | Choice |
+|---|---|
+| **Language** | TypeScript |
+| **Build** | Vite |
+| **UI / app framework** | **Svelte 5** (pinned) |
+| **Text, choices, HUD** | **DOM + CSS** — not canvas |
+| **Illustration panel & combat FX** | **CSS sprite sheets + Web Animations API first.** PixiJS v8 held in reserve, added only if combat demands real particle work |
+| **Epitaph card export** | Plain **Canvas 2D** → PNG |
+| **Content** | JSON event files, validated with **Zod** |
+| **Save / leaderboard (v1)** | **localStorage** |
+| **Leaderboard (v2, optional)** | Cloudflare Workers + D1 |
+| **Testing** | **Vitest** on the run engine + seeded RNG determinism |
+| **Hosting** | **GitHub Pages** via GitHub Actions |
+| **Ads** | **CrazyGames HTML5 v2 SDK** behind a thin adapter so Poki can swap in |
+
+#### Justification
+
+1. **The game is a document, not a scene.** 90% of your screen is prose and buttons. DOM does text natively — selection, scrolling, reflow, font scaling, screen readers, browser zoom. Every canvas engine throws all of that away and asks you to rebuild it worse. This is the single most important decision in Phase 5.
+2. **Svelte is the framework you can read.** The brief asked me to weight learning curve *for you*. A `.svelte` file is HTML with a script block. When you want to change how a choice button looks, you can find it. That is worth more than any benchmark here.
+3. **It costs nothing and hosts anywhere.** Static output → GitHub Pages, itch.io, CrazyGames, or your own PWA, from the same build. Phase 4 said portals are upside, not the plan — this stack keeps every door open simultaneously.
+4. **No engine means no engine risk.** Phaser 4 shipped four months ago; Kaplay is in alpha. Both are genuine hazards when an AI is writing the code, because I will reach for last version's API. This stack is built from parts that have been stable for years.
+5. **Mobile performance is a non-issue by construction.** No WebGL context, no 3D, no physics, tiny assets. Phase 4 scored mobile risk as "very low" — this stack is why.
+6. **It scales with content, not with code.** Events are JSON. Event #400 costs exactly what event #40 cost. That is the direct answer to the repetition risk that sank your competitor.
+
+#### Honest "why not" list
+
+| Rejected | Reason |
+|---|---|
+| **Phaser 4** | Wrong shape (text in canvas) *and* too new for me to write reliably. Two independent reasons |
+| **React 19** | Genuinely close. I write it more reliably than Svelte. Rejected only because you must be able to read the code — reverse that priority and React wins |
+| **Kaplay** | Alpha |
+| **Three.js / Babylon / PlayCanvas** | 3D, explicit non-goal |
+| **Unity / Godot web export** | Multi-MB WASM payloads, slow first load, poor text handling. Fights every advantage this genre has |
+| **Colyseus / Socket.io / PartyKit** | Real-time multiplayer, not needed |
+| **Render / Fly.io** | Free-tier cold starts make them worse than Cloudflare Workers for the only backend we might ever want |
+
+---
+
+### Phase 5 sources
+
+- [Phaser — Phaser vs Kaplay vs Excalibur (Apr 2026)](https://phaser.io/news/2026/04/phaser-vs-kaplay-vs-excalibur-2d-web-game-framework)
+- [phaserjs/phaser — Releases](https://github.com/phaserjs/phaser/releases) (v4.0 "Caladan" 10 Apr 2026; v4.1 "Salusa" 30 Apr 2026)
+- [Generalist Programmer — Phaser vs PixiJS (2026)](https://generalistprogrammer.com/comparisons/phaser-vs-pixijs) (PixiJS v8 ~⅓ Phaser's bundle, WebGPU-first)
+- [Codersera — Top JavaScript Game Engines & Libraries (2026)](https://codersera.com/blog/top-javascript-game-engines-and-libraries/)
+- [Strapi — Svelte vs React in 2026](https://strapi.io/blog/svelte-vs-react-comparison) (Svelte 5.55.10, React 19.2.6; 2–5 KB vs 42 KB gzip)
+- [Netguru — Front end technologies 2026](https://www.netguru.com/blog/front-end-technologies) (Vite as the 2026 build standard)
+- [CrazyGames Documentation — HTML5 v2 SDK](https://docs.crazygames.com/sdk/html5-v2/intro/)
+- [CrazyGames Documentation — Video ads](https://docs.crazygames.com/sdk/video-ads/)
+- [CrazyGames Documentation — Advertisement requirements](https://docs.crazygames.com/requirements/ads/)
+- [Cinevva — CrazyGames Developer Guide (2026)](https://app.cinevva.com/guides/publish-game-crazygames) (50 MB initial / 250 MB total / 1,500 file limits)
 
 ---
