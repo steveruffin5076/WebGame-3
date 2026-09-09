@@ -774,3 +774,38 @@ On approval, the build order is:
 - ✅ **Approve or amend this plan.**
 - 🎲 **A working title** — needed for the repo, the PWA manifest and the epitaph card.
 - ✍️ **A decision on step 3's gate:** how many sample events do you want to read before I scale up content? My recommendation is 5.
+
+---
+
+# ✅ PLAN APPROVED — 2026-09-09
+
+| | |
+|---|---|
+| **Status** | Approved by the director. Build authorised |
+| **Working title** | **WICKMARROW** — *wick* (the small warm light) + *marrow* (bone, death). The tone in one word |
+| **Content gate** | **5 sample events.** I build to step 3, then stop. You read the five and judge the voice before any content scales |
+
+### Title screening record
+
+Eight candidates screened for prior use via web search on 2026-09-09.
+
+| Candidate | Result | Outcome |
+|---|---|---|
+| **Wickmarrow** | **Zero hits of any kind** — no game, product, character, or trademark record found | ✅ **Selected** |
+| Grimhearth | No game or trademark record. Nearby: *Grim Heart: Bleak Laments*, *Grimshire*. No evidence of Blizzard policing the "hearth" root; *Stonehearth* shipped | Runner-up |
+| Lantern & Bone | No game found. Ampersand degrades to `lantern-and-bone` in URLs | Runner-up |
+| The Tallow Road | No title conflict, but *Tallowmere* is an existing indie roguelike — adjacent root, same genre | Demoted |
+| Tallowlight | Active commercial uses (lantern products, a local-history journal) | ❌ |
+| Emberhollow | **Ember Hollow Games** is an active game company | ❌ |
+| Duskmarrow | Forgotten Realms wizard (*Baldur's Gate: Dark Alliance II*) — same genre | ❌ |
+| Kindlewake | Clean, but "Kindle" on a text-reading game overlaps Amazon's mark in the worst possible category | ❌ |
+
+> ⚠️ **This screen is not legal clearance.** It is a prior-use search of public web sources; USPTO's database was not queried directly, so "no record found" is a signal, not proof. Before committing money or marketing to the name: search uspto.gov directly, hand-check Steam / itch.io / Google Play, and consult a trademark attorney if the game earns meaningful revenue.
+
+### Immediate build scope (steps 1–3, then STOP)
+
+1. Scaffold — Vite + Svelte 5 + TypeScript, GitHub Pages deploy via Actions
+2. Run engine — seeded `mulberry32` PRNG, event loader, Zod schema, run state machine, Vitest determinism proof
+3. **Event schema + 5 sample events** → **GATE. Director reads and judges the voice.**
+
+Steps 4–9 remain unstarted until the gate is passed.
