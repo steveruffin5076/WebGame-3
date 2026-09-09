@@ -10,6 +10,8 @@ Status:
 - [x] Phase 4 — Popularity analysis of chosen game
 - [x] Phase 5 — Tools comparison
 - [x] Phase 6 — Visual & animation direction
+- [x] Plan approved — build authorised 2026-09-09
+- [x] Build steps 1–3 complete — **paused at the 5-event voice gate**
 
 > **Source quality note.** Hard numbers below come from Sensor Tower, AzurGames,
 > PocketGamer.biz, Deconstructor of Fun and platform developer docs. Some
@@ -809,3 +811,85 @@ Eight candidates screened for prior use via web search on 2026-09-09.
 3. **Event schema + 5 sample events** → **GATE. Director reads and judges the voice.**
 
 Steps 4–9 remain unstarted until the gate is passed.
+
+---
+
+# 🔨 BUILD PROGRESS — updated 2026-09-09
+
+| | |
+|---|---|
+| **Branch** | `claude/start-plan-review-lxci8x` |
+| **Steps complete** | **1, 2, 3** of 9 |
+| **Current state** | ⏸ **Paused at the content gate.** Director must read the five events and judge the voice |
+| **Tests** | **32 / 32 passing** (`tests/rng` 10 · `tests/run` 14 · `tests/content` 8) |
+| **Type check** | 181 files · **0 errors · 0 warnings** |
+| **Bundle** | 119.66 kB raw / **37.04 kB gzipped** JS · 2.71 kB CSS |
+
+## Step-by-step status
+
+| # | Step | Status | Evidence |
+|---|---|---|---|
+| 1 | Scaffold — Vite 6 + Svelte 5 + TypeScript, Pages deploy via Actions | ✅ Done | `vite.config.ts`, `.github/workflows/deploy.yml` |
+| 2 | Run engine — seeded PRNG, Zod schema, state machine, determinism proof | ✅ Done | `src/lib/engine/*` · 32 tests |
+| 3 | Event schema + 5 sample events | ✅ Done | `src/lib/content/events/roadside.json` |
+| — | **GATE — director reads the five events** | ⏸ **Open** | Awaiting your verdict on the voice |
+| 4 | UI shell — illustration panel, prose, bottom-anchored choices, HUD | ⬜ Not started | Blocked by gate |
+| 5 | Combat | ⬜ Not started | Blocked by gate |
+| 6 | Art pipeline — first 5 illustrations, palette quantized | ⬜ Not started | Blocked by gate |
+| 7 | Content pass to 40–60 events | ⬜ Not started | Blocked by gate |
+| 8 | Daily Delve + epitaph card | ⬜ Not started | Blocked by gate |
+| 9 | Ad adapter + portal build | ⬜ Not started | Blocked by gate |
+
+## What was built
+
+### Code shipped
+
+| File | Lines | What it does |
+|---|---|---|
+| `src/lib/engine/rng.ts` | 110 | Seeded `mulberry32` PRNG + FNV-1a string hashing. Exports `createRng`, `hashSeed`, `dailySeedString`. **`Math.random()` is never used anywhere in the project** |
+| `src/lib/engine/schema.ts` | 129 | Zod content schema. Events are data, never code. Strict objects reject unknown fields; duplicate ids are rejected by id |
+| `src/lib/engine/run.ts` | 313 | Run state machine — 3 classes, event/outcome/over phases, weighted selection with recency penalty, resource clamping, scoring, transcript |
+| `src/lib/content/index.ts` | 10 | Validates all content at import time, so a typo fails at load, not three choices into a run |
+| `src/App.svelte` | 171 | **Scaffold reader only — not the designed UI.** Exists to make the engine playable. The real UI is step 4 |
+| `tests/*.ts` | 318 | 32 tests |
+
+### Content shipped
+
+Five events, one biome (`roadside`), **1,917 words** of prose.
+
+| Event | Choices | Outcomes | Notes |
+|---|---|---|---|
+| The Tallow Man | 4 | 5 | Introduces the wick economy |
+| Wolves at the Treeline | 4 | 6 | Introduces stat-gated choices |
+| What the Well Keeps | 4 | 7 | The widest branch — greed vs. caution |
+| Someone Else's Fire | 4 | 4 | **Once per run.** The moral test |
+| The Long Room | 4 | 4 | Quiet event — pacing relief |
+
+### Rules the engine enforces (and tests prove)
+
+- **Determinism.** The same seed produces a byte-identical run, on any device, forever — and is unaffected by how many runs were played before it. This is what makes the Daily Delve leaderboard trustworthy.
+- **No consecutive repeats.** The same event never appears twice in a row.
+- **Once-only respected.** `once: true` events appear at most once per run.
+- **Variety.** A 60-step run touches at least 3 distinct events (this floor rises with content).
+- **Phase guards.** Calling `advance` before `choose` throws instead of corrupting state.
+- **Locked choices are unplayable**, not merely hidden.
+- **Resources clamp.** HP never exceeds max or falls below zero; coin and wick never go negative.
+- **Hints never spoil.** A regex test fails the build if a choice hint contains a number followed by HP/coin/damage.
+
+## Design additions made during the build — awaiting your ruling
+
+These went beyond the approved plan. Each is reversible; say the word.
+
+| # | Addition | What it is | Why | Cost to remove |
+|---|---|---|---|---|
+| 1 | **Wick** | A light resource. Burns 1 per step deeper. At zero, the dark costs 1 HP per step | Gives depth a rising cost, so "go deeper" is a real decision instead of a free button | ~1 hour. Touches schema, run state and 2 events |
+| 2 | **"Take the pot"** in *Someone Else's Fire* | You may rob a woman who cannot stand up. +4 HP, +3 coin, −2 Heart, and a permanent flag | It is the sharpest "grim but warm" test in the five — warmth means nothing if cruelty is not on the menu | 10 minutes. Delete one choice block |
+| 3 | **Zod at runtime** | Zod is **~30 kB of the 37 kB gzipped bundle** | Loud failures during content authoring | Move validation to build time once the schema settles → bundle drops to roughly 7 kB gzipped. Recommend doing this at step 7, not now |
+
+## What I need from you to unblock step 4
+
+1. **The voice verdict.** Read the five events. Is the grimness landing without being miserable, and is the warmth landing without being soft? If it's close but off, name the event that's *closest* to right and I'll calibrate to that one rather than guessing.
+2. **Keep or cut the wick** (addition 1).
+3. **Keep or cut "Take the pot"** (addition 2).
+
+Addition 3 is my call to make later; it's logged here so it isn't forgotten.
