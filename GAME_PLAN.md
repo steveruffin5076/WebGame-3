@@ -6,7 +6,7 @@ Research date: **2026-09-09**. Phases follow `Start_Plan.md`.
 Status:
 - [x] Phase 1 — Market research
 - [x] Phase 2 — 5-year prediction
-- [ ] Phase 3 — Director interview
+- [x] Phase 3 — Director interview
 - [ ] Phase 4 — Popularity analysis of chosen game
 - [ ] Phase 5 — Tools comparison
 - [ ] Phase 6 — Visual & animation direction
@@ -251,3 +251,57 @@ Market size: **HTML5 gaming passed $6B in 2026** **[soft]**.
 - [MagicBell — PWA iOS Limitations and Safari Support 2026](https://www.magicbell.com/blog/pwa-ios-limitations-safari-support-complete-guide)
 - [MobiLoud — Publishing a PWA to the App Store, 2026](https://www.mobiloud.com/blog/publishing-pwa-app-store/)
 - [RevenueCat — Apple's EU update: CTF's 2026 sunset](https://www.revenuecat.com/blog/growth/apple-eu-dma-update-june-2025)
+
+---
+
+## PHASE 3 — DIRECTOR INTERVIEW (answers locked)
+
+Interviewed 2026-09-09. These are decisions, not suggestions. Phases 4–6 are built on them.
+
+| # | Topic | Decision |
+|---|---|---|
+| 1 | **Game to build first** | **Idea 1 — Text adventure RPG** with pixel-art event illustrations, choices, combat, multiple endings, score ranking |
+| 2a | **Target audience** | **Adults 18–34, mid-core readers.** People who actually read: tolerate long text blocks, want stat builds and real consequences, replay for different endings |
+| 2b | **Region** | **US / English-first.** Highest rewarded-video eCPM (~$15–28). No localization cost at launch |
+| 3 | **Session length** | **8–15 minutes per run.** One adventure = one sitting, start to death or ending. Roguelite: die → unlock → run again. 2–3 runs stack to a 30-min session |
+| 4 | **Art direction** | **Moody Pixel Art.** Low-res, high-contrast, tight palette, heavy blacks, single accent colour for danger. Darkest Dungeon's mood at Dead Cells' resolution |
+| 5 | **Story tone** | **Grim but warm.** Genuinely dangerous world, permanent death, but NPCs you regret losing, small kindnesses that land, dry humour under pressure |
+| 6 | **First shippable** | **Vertical slice.** One biome, ~40–60 events, one enemy tier, 2 endings, 3 classes, full run loop end to end. Target ~2–4 weeks |
+| 7 | **Attitude to cutting scope** | **Protect the feature list, flex the date.** Features are not sacrificed to hit a calendar |
+
+### 3.1 One tension, resolved
+
+Answers 6 and 7 pull against each other: a 2–4 week target *and* a refusal to cut features. Resolving it explicitly so it doesn't cause an argument later:
+
+> **The vertical slice's feature list is FIXED. Its date is a TARGET, not a commitment.**
+>
+> The seven items in row 6 are the definition of done. If week 4 arrives and combat isn't right, the date moves — I do not ship a slice with combat cut out. But I also do not add anything to that list mid-build. Anything new goes on a post-slice backlog.
+
+That keeps answer 7's guarantee (features protected) without letting scope creep eat the deadline from the other side. Since you are the tester, a slipped date costs you a week; a hollow slice costs you the ability to judge whether the game is fun at all.
+
+### 3.2 What these answers do to the design
+
+Each decision has a downstream consequence worth naming before Phase 4 scores the concept.
+
+| Decision | Consequence I now have to design around |
+|---|---|
+| Mid-core readers, 18–34 | Text can be long (200–400 words/screen). No dumbing down. But it *must* be good — this audience notices generic prose immediately, which is exactly the Phase 2 AI-backlash risk |
+| US-first, English-only | No i18n layer in v1. Copy can use idiom and voice freely. Revisit localization only after a revenue baseline exists |
+| 8–15 min runs, permadeath | Needs meta-progression from day one, or death feels like pure loss. Also gives a clean, honest rewarded-ad slot **between** runs — never mid-run. This directly fixes Life in Adventure's #3 complaint (inescapable ads) |
+| Roguelite structure | Content must be *combinatorial*, not linear. Events need tags, prerequisites and weights so 50 events produce hundreds of distinct run shapes. This is the answer to complaint #1 (repetition) |
+| Moody Pixel Art | Low resolution is deliberate cover: AI-generated bases get downsampled and hand-fixed, which reads as intentional rather than as slop. Locks the palette work in Phase 6 |
+| Grim but warm | The warmth is the moat. Phase 2 predicted "visibly human" becomes a marketing position by ~2029 — dry humour and genuine NPC attachment are the parts hardest to fake |
+| Vertical slice first | Architecture must support content scaling from day one: events as data files, not hardcoded. Adding event #400 must cost the same as event #40 |
+
+### 3.3 Explicit non-goals for v1
+
+Stated now so they never quietly creep in:
+
+- ❌ No multiplayer of any kind
+- ❌ No server, no accounts, no cloud saves (local storage only)
+- ❌ No localization
+- ❌ No user-generated content or level editor
+- ❌ No IAP (CrazyGames IAP is invite-only — it must be earned with ad performance first, per Phase 1)
+- ❌ No 3D, no WebGPU — this game does not need either
+
+---
