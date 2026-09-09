@@ -1,0 +1,17 @@
+[
+  {
+    "id": "lean_wolf",
+    "name": "the lean wolf",
+    "tier": 1,
+    "maxHp": 8,
+    "might": 2,
+    "wits": 1,
+    "tags": ["beasts", "danger"],
+    "fleeText": "You get clear of it. Behind you it does not follow — it has already turned back to the treeline, unhurried, already thinking about something else.",
+    "victoryText": "It goes down and does not get up, and you stand over it breathing hard, and there is no triumph in it at all. Just a dead animal that was hungry, and you, who were hungrier to live.",
+    "rewardEffects": [
+      { "kind": "coin", "amount": 1 },
+      { "kind": "stat", "stat": "might", "amount": 1 }
+    ]
+  }
+]

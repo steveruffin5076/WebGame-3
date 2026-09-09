@@ -1,0 +1,25 @@
+[
+  {
+    "id": "a_shape_on_the_road",
+    "title": "A Shape on the Road",
+    "biome": "roadside",
+    "tags": ["danger", "beasts", "combat"],
+    "weight": 2,
+    "illustration": "lean_wolf.png",
+    "body": "It comes out of the ditch grass without any noise at all, which is the part that stays with you. One animal, ribs like a washboard, eyes doing the arithmetic wolves do.\n\nThere is no treeline to threaten it back into. There is no coin worth throwing. It has already decided, and now so must you.",
+    "choices": [
+      {
+        "label": "Meet it.",
+        "hint": "There is not going to be a clean way out of this one.",
+        "whenLocked": "show",
+        "outcomes": [
+          {
+            "weight": 1,
+            "text": "It closes the distance before you have finished the thought.",
+            "effects": [{ "kind": "combat", "enemy": "lean_wolf" }]
+          }
+        ]
+      }
+    ]
+  }
+]

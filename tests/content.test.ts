@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ROADSIDE_EVENTS } from '../src/lib/content';
-import { parseEvents } from '../src/lib/engine/schema';
+import { ALL_EVENTS, ROADSIDE_ENEMIES, ROADSIDE_EVENTS } from '../src/lib/content';
+import { parseEnemies, parseEvents } from '../src/lib/engine/schema';
 
 describe('event content', () => {
   it('loads and validates the roadside set', () => {
@@ -26,9 +26,10 @@ describe('event content', () => {
   });
 
   it('never states an outcome inside a choice hint', () => {
-    // Hints describe the nature of a risk, never its result.
+    // Hints describe the nature of a risk, never its result. Checked across
+    // every event that ships, not just the voice-gate five.
     const spoilers = /\b(you (will )?(lose|gain)|hp|\d+\s*(damage|health))\b/i;
-    for (const event of ROADSIDE_EVENTS) {
+    for (const event of ALL_EVENTS) {
       for (const choice of event.choices) {
         if (choice.hint) {
           expect(spoilers.test(choice.hint), `"${choice.label}" hint spoils its outcome`).toBe(false);
@@ -75,5 +76,44 @@ describe('event content', () => {
         },
       ]),
     ).toThrow();
+  });
+});
+
+describe('enemy content', () => {
+  it('loads and validates the roadside enemy tier', () => {
+    expect(ROADSIDE_ENEMIES.length).toBeGreaterThan(0);
+    for (const enemy of ROADSIDE_ENEMIES) {
+      expect(enemy.maxHp).toBeGreaterThan(0);
+    }
+  });
+
+  it('rejects an unknown field rather than ignoring it', () => {
+    expect(() =>
+      parseEnemies([
+        {
+          id: 'bad_enemy',
+          name: 'a bad enemy',
+          maxHp: 5,
+          might: 1,
+          wits: 1,
+          fleeText: 'gone',
+          victoryText: 'dead',
+          typoedField: true,
+        },
+      ]),
+    ).toThrow();
+  });
+
+  it('rejects duplicate ids', () => {
+    const one = {
+      id: 'twin_enemy',
+      name: 'a twin',
+      maxHp: 5,
+      might: 1,
+      wits: 1,
+      fleeText: 'gone',
+      victoryText: 'dead',
+    };
+    expect(() => parseEnemies([one, { ...one }])).toThrow(/Duplicate enemy id/);
   });
 });

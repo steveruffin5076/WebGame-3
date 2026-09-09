@@ -26,6 +26,8 @@ export const effectSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('flag'), set: id.optional(), clear: id.optional() }),
   z.object({ kind: z.literal('item'), add: id.optional(), remove: id.optional() }),
   z.object({ kind: z.literal('end'), ending: id }),
+  /** Starts a fight. Resolved round by round by the run engine, not content. */
+  z.object({ kind: z.literal('combat'), enemy: id }),
 ]);
 export type Effect = z.infer<typeof effectSchema>;
 
@@ -109,6 +111,50 @@ export const eventSchema = z
 export type GameEvent = z.infer<typeof eventSchema>;
 
 export const eventFileSchema = z.array(eventSchema);
+
+/**
+ * An enemy: one tier for the vertical slice (Phase 4/6 spec). Combat itself
+ * is engine logic (see run.ts) — this is only the numbers and flavor text
+ * that make one enemy different from another.
+ */
+export const enemySchema = z
+  .object({
+    id,
+    name: z.string().min(1),
+    tier: z.number().int().positive().default(1),
+    maxHp: z.number().int().positive(),
+    might: z.number().int().nonnegative(),
+    wits: z.number().int().nonnegative(),
+    tags: z.array(id).default([]),
+    /** Shown when the player successfully breaks off and runs. */
+    fleeText: z.string().min(1),
+    /** Shown when the enemy's hp reaches zero. */
+    victoryText: z.string().min(1),
+    /** Effects applied once, on victory only (loot, stat gain, flags). */
+    rewardEffects: z.array(effectSchema).default([]),
+  })
+  .strict();
+export type Enemy = z.infer<typeof enemySchema>;
+
+export const enemyFileSchema = z.array(enemySchema);
+
+/** Parses and validates raw enemy data, reporting the offending path. */
+export function parseEnemies(raw: unknown): Enemy[] {
+  const result = enemyFileSchema.safeParse(raw);
+  if (!result.success) {
+    const issues = result.error.issues
+      .map((i) => `  · ${i.path.join('.') || '(root)'}: ${i.message}`)
+      .join('\n');
+    throw new Error(`Enemy content failed validation:\n${issues}`);
+  }
+
+  const seen = new Set<string>();
+  for (const enemy of result.data) {
+    if (seen.has(enemy.id)) throw new Error(`Duplicate enemy id: "${enemy.id}"`);
+    seen.add(enemy.id);
+  }
+  return result.data;
+}
 
 /** Parses and validates raw event data, reporting the offending event id. */
 export function parseEvents(raw: unknown): GameEvent[] {

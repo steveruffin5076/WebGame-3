@@ -1,17 +1,22 @@
 <script lang="ts">
-  import { ALL_EVENTS } from './lib/content';
+  import { ALL_ENEMIES, ALL_EVENTS } from './lib/content';
   import {
     CLASSES,
     advance,
     choose,
+    combatActions,
+    continueCombat,
     isOver,
+    resolveCombat,
     scoreRun,
     startRun,
     visibleChoices,
+    type CombatActionId,
     type RunState,
   } from './lib/engine/run';
   import { dailySeedString } from './lib/engine/rng';
   import IllustrationPanel from './lib/ui/IllustrationPanel.svelte';
+  import CombatPanel from './lib/ui/CombatPanel.svelte';
   import Hud from './lib/ui/Hud.svelte';
   import ChoiceButton from './lib/ui/ChoiceButton.svelte';
   import ConfirmOverlay from './lib/ui/ConfirmOverlay.svelte';
@@ -31,13 +36,25 @@
 
   function take(index: number) {
     if (!run) return;
-    choose(run, index);
+    choose(run, index, ALL_ENEMIES);
     tick++;
   }
 
   function next() {
     if (!run) return;
     advance(run, ALL_EVENTS);
+    tick++;
+  }
+
+  function act(actionId: CombatActionId) {
+    if (!run) return;
+    resolveCombat(run, actionId);
+    tick++;
+  }
+
+  function nextRound() {
+    if (!run) return;
+    continueCombat(run, ALL_EVENTS);
     tick++;
   }
 
@@ -75,9 +92,20 @@
       return;
     }
 
+    if (run.phase === 'combat') {
+      const n = Number(e.key);
+      const actions = combatActions();
+      if (Number.isInteger(n) && n >= 1 && n <= actions.length) {
+        act(actions[n - 1]!.id);
+        e.preventDefault();
+      }
+      return;
+    }
+
     if (e.key === ' ' || e.key === 'Enter') {
       e.preventDefault();
       if (run.phase === 'outcome') next();
+      else if (run.phase === 'combatOutcome') nextRound();
       else if (isOver(run)) run = null;
     }
   }
@@ -134,10 +162,39 @@
             <p>{para}</p>
           {/each}
         </article>
+      {:else if run.phase === 'combat' && run.enemy}
+        <CombatPanel
+          enemyName={run.enemy.name}
+          enemyHp={run.enemyHp}
+          enemyMaxHp={run.enemy.maxHp}
+          playerHp={run.hp}
+          playerMaxHp={run.maxHp}
+          impact={null}
+        />
+      {:else if run.phase === 'combatOutcome'}
+        <CombatPanel
+          enemyName={run.enemy?.name ?? 'the fight'}
+          enemyHp={run.enemyHp}
+          enemyMaxHp={run.enemy?.maxHp ?? 1}
+          playerHp={run.hp}
+          playerMaxHp={run.maxHp}
+          impact={run.lastCombatDamage}
+        />
+        {#if run.combatText}
+          <article class="outcome">
+            {#each run.combatText.split('\n\n') as para}
+              <p>{para}</p>
+            {/each}
+          </article>
+        {/if}
       {:else if isOver(run)}
         <article class="outcome">
           {#if run.pendingOutcome}
             {#each run.pendingOutcome.text.split('\n\n') as para}
+              <p>{para}</p>
+            {/each}
+          {:else if run.combatText}
+            {#each run.combatText.split('\n\n') as para}
               <p>{para}</p>
             {/each}
           {/if}
@@ -168,6 +225,17 @@
         {/each}
       {:else if run.phase === 'outcome'}
         <ChoiceButton label="Go on." onSelect={next} />
+      {:else if run.phase === 'combat'}
+        {#each combatActions() as action, i (action.id)}
+          <ChoiceButton
+            label={action.label}
+            hint={action.hint}
+            shortcut={i + 1}
+            onSelect={() => act(action.id)}
+          />
+        {/each}
+      {:else if run.phase === 'combatOutcome'}
+        <ChoiceButton label="Continue." onSelect={nextRound} />
       {:else if isOver(run)}
         <ChoiceButton label="Again." onSelect={() => (run = null)} />
       {/if}

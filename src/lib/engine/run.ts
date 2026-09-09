@@ -1,5 +1,14 @@
 import { createRng, type Rng } from './rng';
-import { STATS, type Choice, type Condition, type Effect, type GameEvent, type Outcome, type StatName } from './schema';
+import {
+  STATS,
+  type Choice,
+  type Condition,
+  type Effect,
+  type Enemy,
+  type GameEvent,
+  type Outcome,
+  type StatName,
+} from './schema';
 
 /**
  * The run state machine.
@@ -54,7 +63,9 @@ export const CLASSES: readonly CharacterClass[] = [
   },
 ];
 
-export type Phase = 'event' | 'outcome' | 'over';
+export type Phase = 'event' | 'outcome' | 'combat' | 'combatOutcome' | 'over';
+
+export type CombatActionId = 'attack' | 'feint' | 'guard' | 'flee';
 
 export interface LogEntry {
   depth: number;
@@ -86,6 +97,15 @@ export interface RunState {
   ending: string | null;
   causeOfDeath: string | null;
   log: LogEntry[];
+  /** Set by a `combat` effect; cleared when the fight ends (won or fled). */
+  enemy: Enemy | null;
+  enemyHp: number;
+  combatRound: number;
+  /** Narration for the round just resolved, shown during 'combatOutcome'. */
+  combatText: string | null;
+  /** Exact numbers from the round just resolved, for animation — not for
+   * parsing out of combatText. Null outside 'combatOutcome'. */
+  lastCombatDamage: { toEnemy: number; toPlayer: number; fled: boolean } | null;
 }
 
 export interface RunConfig {
@@ -101,6 +121,20 @@ const RECENT_TAG_MEMORY = 6;
 const REPEAT_TAG_PENALTY = 0.45;
 /** Wick burned per step into the dark. */
 const WICK_PER_DEPTH = 1;
+
+/**
+ * Combat tuning. Chances are a base rate nudged by the stat gap between
+ * fighter and target, then clamped so nothing is ever a certainty.
+ */
+const ATTACK_BASE_CHANCE = 0.6;
+const FEINT_BASE_CHANCE = 0.45;
+const FLEE_BASE_CHANCE = 0.35;
+const ENEMY_BASE_CHANCE = 0.55;
+const STAT_GAP_WEIGHT = 0.07;
+const ATTACK_DAMAGE: readonly [number, number] = [1, 3];
+const FEINT_DAMAGE: readonly [number, number] = [2, 4];
+const ENEMY_DAMAGE: readonly [number, number] = [1, 2];
+const GUARD_DAMAGE_MULTIPLIER = 0.5;
 
 export class NoEligibleEventError extends Error {}
 
@@ -146,7 +180,7 @@ function eligibleEvents(state: RunState, events: readonly GameEvent[], biome: st
   });
 }
 
-export function applyEffect(state: RunState, effect: Effect): void {
+export function applyEffect(state: RunState, effect: Effect, enemies: readonly Enemy[] = []): void {
   switch (effect.kind) {
     case 'hp':
       state.hp = clamp(state.hp + effect.amount, 0, state.maxHp);
@@ -175,6 +209,13 @@ export function applyEffect(state: RunState, effect: Effect): void {
     case 'end':
       state.ending = effect.ending;
       break;
+    case 'combat': {
+      const enemy = enemies.find((e) => e.id === effect.enemy);
+      if (!enemy) throw new Error(`Unknown enemy id "${effect.enemy}" in combat effect`);
+      state.enemy = enemy;
+      state.enemyHp = enemy.maxHp;
+      break;
+    }
   }
 }
 
@@ -182,6 +223,7 @@ export function applyEffect(state: RunState, effect: Effect): void {
 export function visibleChoices(
   state: RunState,
 ): { choice: Choice; index: number; locked: boolean }[] {
+  if (state.phase !== 'event') return [];
   const event = state.currentEvent;
   if (!event) return [];
   const out: { choice: Choice; index: number; locked: boolean }[] = [];
@@ -235,6 +277,11 @@ export function startRun(config: RunConfig): RunState {
     ending: null,
     causeOfDeath: null,
     log: [],
+    enemy: null,
+    enemyHp: 0,
+    combatRound: 0,
+    combatText: null,
+    lastCombatDamage: null,
   };
 
   pickNextEvent(state, config.events, config.biome ?? 'roadside');
@@ -242,7 +289,7 @@ export function startRun(config: RunConfig): RunState {
 }
 
 /** Resolve a choice. Moves to the 'outcome' phase; call advance() to continue. */
-export function choose(state: RunState, choiceIndex: number): void {
+export function choose(state: RunState, choiceIndex: number, enemies: readonly Enemy[] = []): void {
   if (state.phase !== 'event') throw new Error(`choose() called during phase "${state.phase}"`);
   const event = state.currentEvent;
   if (!event) throw new Error('choose() called with no current event');
@@ -254,7 +301,7 @@ export function choose(state: RunState, choiceIndex: number): void {
   }
 
   const outcome = state.rng.weightedPick(choice.outcomes, (o) => o.weight);
-  for (const effect of outcome.effects) applyEffect(state, effect);
+  for (const effect of outcome.effects) applyEffect(state, effect, enemies);
 
   state.pendingOutcome = outcome;
   state.log.push({
@@ -275,10 +322,10 @@ export function choose(state: RunState, choiceIndex: number): void {
   }
 }
 
-/** Step deeper: burn wick, then draw the next event. */
-export function advance(state: RunState, events: readonly GameEvent[], biome = 'roadside'): void {
-  if (state.phase !== 'outcome') throw new Error(`advance() called during phase "${state.phase}"`);
-  state.pendingOutcome = null;
+/** Burns wick for one step deeper, then draws the next event. Shared by
+ * advance() and the end of combat, so "a step deeper" means the same thing
+ * whether it followed a normal outcome or a fight. */
+function stepDeeper(state: RunState, events: readonly GameEvent[], biome: string): void {
   state.depth++;
   state.wick = Math.max(0, state.wick - WICK_PER_DEPTH);
 
@@ -293,6 +340,155 @@ export function advance(state: RunState, events: readonly GameEvent[], biome = '
   }
 
   pickNextEvent(state, events, biome);
+}
+
+/**
+ * Step deeper: burn wick, then draw the next event — unless the outcome
+ * just read started a fight, in which case combat begins instead. Wick
+ * for that step is burned once the fight is over, not when it starts.
+ */
+export function advance(state: RunState, events: readonly GameEvent[], biome = 'roadside'): void {
+  if (state.phase !== 'outcome') throw new Error(`advance() called during phase "${state.phase}"`);
+  state.pendingOutcome = null;
+
+  if (state.enemy) {
+    state.combatRound = 0;
+    state.phase = 'combat';
+    return;
+  }
+
+  stepDeeper(state, events, biome);
+}
+
+/** The four fixed combat actions. Not content-driven — every fight offers
+ * the same choices; what differs is the enemy and the player's stats. */
+export function combatActions(): { id: CombatActionId; label: string; hint: string }[] {
+  return [
+    { id: 'attack', label: 'Attack.', hint: 'A solid, honest hit. Might.' },
+    { id: 'feint', label: 'Feint for an opening.', hint: 'Riskier, and harder to answer. Wits.' },
+    { id: 'guard', label: 'Guard.', hint: 'Take less. Deal nothing.' },
+    { id: 'flee', label: 'Break off and run.', hint: 'Your wits against its legs.' },
+  ];
+}
+
+function clamp01(value: number): number {
+  return clamp(value, 0.05, 0.95);
+}
+
+/**
+ * Resolves one round of combat: the player's action, then the enemy's
+ * answer (unless the player just escaped, or the enemy just died). Moves
+ * to 'combatOutcome' so the round's narration gets its own beat before the
+ * next one — or to 'over' directly, if this round was fatal.
+ */
+export function resolveCombat(state: RunState, actionId: CombatActionId): void {
+  if (state.phase !== 'combat') throw new Error(`resolveCombat() called during phase "${state.phase}"`);
+  const enemy = state.enemy;
+  if (!enemy) throw new Error('resolveCombat() called with no enemy');
+
+  state.combatRound++;
+  const lines: string[] = [];
+  let toEnemy = 0;
+  let toPlayer = 0;
+
+  if (actionId === 'flee') {
+    const chance = clamp01(FLEE_BASE_CHANCE + (state.stats.wits - enemy.wits) * STAT_GAP_WEIGHT);
+    if (state.rng.chance(chance)) {
+      lines.push(enemy.fleeText);
+      state.enemy = null;
+      state.enemyHp = 0;
+      state.combatText = lines.join('\n\n');
+      state.lastCombatDamage = { toEnemy, toPlayer, fled: true };
+      state.phase = 'combatOutcome';
+      return;
+    }
+    lines.push('You do not get clear of it.');
+  } else if (actionId === 'attack' || actionId === 'feint') {
+    const stat = actionId === 'attack' ? state.stats.might : state.stats.wits;
+    const enemyStat = actionId === 'attack' ? enemy.might : enemy.wits;
+    const baseChance = actionId === 'attack' ? ATTACK_BASE_CHANCE : FEINT_BASE_CHANCE;
+    const [lo, hi] = actionId === 'attack' ? ATTACK_DAMAGE : FEINT_DAMAGE;
+    const chance = clamp01(baseChance + (stat - enemyStat) * STAT_GAP_WEIGHT);
+
+    if (state.rng.chance(chance)) {
+      const dmg = state.rng.int(lo, hi);
+      state.enemyHp = Math.max(0, state.enemyHp - dmg);
+      toEnemy = dmg;
+      lines.push(
+        actionId === 'attack'
+          ? `It lands. ${capitalize(enemy.name)} takes ${dmg}.`
+          : `The opening is there and you take it. ${capitalize(enemy.name)} takes ${dmg}.`,
+      );
+    } else {
+      lines.push(actionId === 'attack' ? "It doesn't land." : 'The opening closes before you can use it.');
+    }
+  } else {
+    lines.push('You set your feet and wait for it.');
+  }
+
+  if (state.enemyHp <= 0) {
+    lines.push(enemy.victoryText);
+    for (const effect of enemy.rewardEffects) applyEffect(state, effect);
+    state.enemy = null;
+    state.combatText = lines.join('\n\n');
+    state.lastCombatDamage = { toEnemy, toPlayer, fled: false };
+    state.phase = 'combatOutcome';
+    return;
+  }
+
+  // The enemy's answer — skipped only when the player already broke away above.
+  const guarding = actionId === 'guard';
+  const enemyChance = clamp01(ENEMY_BASE_CHANCE + (enemy.might - state.stats.might) * STAT_GAP_WEIGHT);
+  if (state.rng.chance(enemyChance)) {
+    let dmg = state.rng.int(ENEMY_DAMAGE[0], ENEMY_DAMAGE[1]) + Math.floor(enemy.might / 2);
+    if (guarding) dmg = Math.floor(dmg * GUARD_DAMAGE_MULTIPLIER);
+    if (dmg > 0) {
+      state.hp = clamp(state.hp - dmg, 0, state.maxHp);
+      toPlayer = dmg;
+      lines.push(
+        `${capitalize(enemy.name)} answers. You take ${dmg}.` + (guarding ? ' Guarding took the worst of it.' : ''),
+      );
+    } else {
+      lines.push(`${capitalize(enemy.name)} answers. Your guard holds.`);
+    }
+  } else {
+    lines.push(`${capitalize(enemy.name)} misses its answer.`);
+  }
+
+  state.combatText = lines.join('\n\n');
+  state.lastCombatDamage = { toEnemy, toPlayer, fled: false };
+
+  if (state.hp <= 0) {
+    state.causeOfDeath = enemy.name;
+    state.phase = 'over';
+    return;
+  }
+
+  state.phase = 'combatOutcome';
+}
+
+function capitalize(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/**
+ * Reads the round just narrated, then either opens the next round, or —
+ * if the fight is over (won or fled) — resumes the run exactly where
+ * advance() would have: burn wick, draw the next event.
+ */
+export function continueCombat(state: RunState, events: readonly GameEvent[], biome = 'roadside'): void {
+  if (state.phase !== 'combatOutcome') {
+    throw new Error(`continueCombat() called during phase "${state.phase}"`);
+  }
+  state.combatText = null;
+  state.lastCombatDamage = null;
+
+  if (state.enemy) {
+    state.phase = 'combat';
+    return;
+  }
+
+  stepDeeper(state, events, biome);
 }
 
 export function isOver(state: RunState): boolean {

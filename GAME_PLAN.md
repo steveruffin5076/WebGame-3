@@ -819,11 +819,11 @@ Steps 4–9 remain unstarted until the gate is passed.
 | | |
 |---|---|
 | **Branch** | `claude/start-plan-review-lxci8x` |
-| **Steps complete** | **1, 2, 3, 4** of 9 |
-| **Current state** | ✅ **Voice gate passed 2026-09-09.** Step 4 (UI shell) complete. Step 5 (combat) not yet started |
-| **Tests** | **32 / 32 passing** (`tests/rng` 10 · `tests/run` 14 · `tests/content` 8) |
-| **Type check** | 185 files · **0 errors · 0 warnings** |
-| **Bundle** | 123.52 kB raw / **38.59 kB gzipped** JS · 5.57 kB CSS (1.86 kB gz) · 12.48 kB pixel webfont |
+| **Steps complete** | **1, 2, 3, 4, 5** of 9 |
+| **Current state** | ✅ Step 5 (combat) complete. Step 6 (art pipeline) not yet started |
+| **Tests** | **49 / 49 passing** (`tests/rng` 10 · `tests/run` 14 · `tests/content` 11 · `tests/combat` 14) |
+| **Type check** | 189 files · **0 errors · 0 warnings** |
+| **Bundle** | 131.43 kB raw / **40.96 kB gzipped** JS · 7.88 kB CSS (2.30 kB gz) · 12.48 kB pixel webfont |
 
 ## Step-by-step status
 
@@ -834,7 +834,7 @@ Steps 4–9 remain unstarted until the gate is passed.
 | 3 | Event schema + 5 sample events | ✅ Done | `src/lib/content/events/roadside.json` |
 | — | **GATE — director reads the five events** | ⏸ **Open** | Awaiting your verdict on the voice |
 | 4 | UI shell — illustration panel, prose, bottom-anchored choices, HUD | ✅ Done | `src/lib/ui/*`, `src/App.svelte`, `src/app.css` |
-| 5 | Combat | ⬜ Not started | Blocked by gate |
+| 5 | Combat | ✅ Done | `src/lib/engine/run.ts` (combat state machine), `src/lib/ui/CombatPanel.svelte` |
 | 6 | Art pipeline — first 5 illustrations, palette quantized | ⬜ Not started | Blocked by gate |
 | 7 | Content pass to 40–60 events | ⬜ Not started | Blocked by gate |
 | 8 | Daily Delve + epitaph card | ⬜ Not started | Blocked by gate |
@@ -867,28 +867,53 @@ New files: `src/lib/ui/IllustrationPanel.svelte`, `Hud.svelte`, `ChoiceButton.sv
 
 **Deferred to later steps, on purpose:** reacting portraits and damage numbers need art (step 6) and combat (step 5) respectively. Character-by-character text reveal (typewriter) is a nice-to-have from the animation spec, not deferred for a technical reason — cut for now to keep step 4 scoped to structure; can be added cheaply whenever you want it.
 
+## Step 5 — Combat (2026-09-09)
+
+The one system the plan said "must feel good, not just work." Built as a
+proper round-by-round state machine, not a single dice roll with a result
+line.
+
+| Spec item | Status | Notes |
+|---|---|---|
+| One enemy tier (Phase 4 vertical-slice scope) | ✅ | `the lean wolf` — 8 HP, tier 1. Content is data (`enemies/roadside.json`); adding a second tier later costs zero engine changes |
+| Four combat actions | ✅ | **Attack** (Might), **Feint** (Wits, riskier/harder to answer), **Guard** (halves incoming damage, deals none), **Flee** (Wits vs. the enemy's Wits) |
+| Enemy sprite frame | ✅ (placeholder) | Same approach as the illustration panel — a framed placeholder that takes a real 64×64 sprite sheet at step 6 without any caller changing |
+| HP bars, player and enemy | ✅ | Live-updating fill bars in `CombatPanel.svelte` |
+| Damage numbers | ✅ | Exact numbers, not parsed from prose — the engine now returns `{toEnemy, toPlayer, fled}` for every round, which the UI turns into DOM elements that rise and fade (Web Animations-style CSS, 600 ms) |
+| Enemy attack lunge / hit flash | ✅ | `transform: translateX()` lunge (250 ms), opacity flash — `transform`/`opacity` only, per the Phase 6 performance rule |
+| Screen shake on a landed hit | ✅ | 200 ms, on the panel only, not the whole page |
+| `prefers-reduced-motion` | ✅ | All combat animation collapses to instant; bars still update |
+| Combat costs no extra wick | ✅ (design call) | Depth/wick only burn once a fight ends (win or flee), same as a normal step — a fight doesn't double-charge for the ground already covered entering it |
+| Deterministic | ✅ | Every roll goes through the same seeded `state.rng`. A fight is part of the run's determinism guarantee, not an exception to it |
+
+**How it wires into content:** a new effect kind, `{ kind: 'combat', enemy: id }`, starts a fight from any outcome. One new demo event, **"A Shape on the Road"** (`combat_demo.json`), exercises it end to end — kept out of `roadside.json` on purpose, so the director's five approved gate events stay untouched. This event is a system demonstration, not part of the voice gate; expect it to be reworded, replaced, or joined by more encounters during the step 7 content pass.
+
+**Verified, not assumed:** 14 new engine tests using a scripted (non-random) fake RNG assert the exact damage numbers, hit/miss branching, guard's halving, flee's success/failure, fatal blows, and phase-guard errors — no statistics, no flakiness. Separately, screenshotted a full fight in the browser (encounter → combat → round result → repeat) and drove one entirely by keyboard (`1` to fight, `1` to attack, `Enter` to continue). Played multiple fights back-to-back in one run and confirmed rewards (coin, Might) accumulate correctly and the run keeps progressing afterward. 49/49 tests pass; 0 type errors; build is clean.
+
 ### Code shipped
 
 | File | Lines | What it does |
 |---|---|---|
 | `src/lib/engine/rng.ts` | 110 | Seeded `mulberry32` PRNG + FNV-1a string hashing. Exports `createRng`, `hashSeed`, `dailySeedString`. **`Math.random()` is never used anywhere in the project** |
-| `src/lib/engine/schema.ts` | 129 | Zod content schema. Events are data, never code. Strict objects reject unknown fields; duplicate ids are rejected by id |
-| `src/lib/engine/run.ts` | 313 | Run state machine — 3 classes, event/outcome/over phases, weighted selection with recency penalty, resource clamping, scoring, transcript |
-| `src/lib/content/index.ts` | 10 | Validates all content at import time, so a typo fails at load, not three choices into a run |
-| `src/App.svelte` | 171 | **Scaffold reader only — not the designed UI.** Exists to make the engine playable. The real UI is step 4 |
-| `tests/*.ts` | 318 | 32 tests |
+| `src/lib/engine/schema.ts` | 175 | Zod content schema for events **and enemies**. Strict objects reject unknown fields; duplicate ids rejected. New: `enemySchema`, `parseEnemies`, the `combat` effect kind |
+| `src/lib/engine/run.ts` | 509 | Run state machine — 3 classes, 5 phases (event/outcome/**combat/combatOutcome**/over), weighted event selection with recency penalty, **the combat round resolver**, resource clamping, scoring, transcript |
+| `src/lib/content/index.ts` | 18 | Validates all content at import time — events **and enemies** — so a typo fails at load, not three choices into a run |
+| `src/App.svelte` | 293 | Orchestrates the UI shell + combat views. Still not the final designed UI — that polish is ongoing across steps 4–6 |
+| `src/lib/ui/*.svelte` | 362 | `Hud`, `IllustrationPanel`, `ChoiceButton`, `ConfirmOverlay` (step 4) + **`CombatPanel`** (step 5) |
+| `tests/*.ts` | 615 | 49 tests across 4 files |
 
 ### Content shipped
 
-Five events, one biome (`roadside`), **1,917 words** of prose.
+Six events, one biome (`roadside`), one enemy tier.
 
 | Event | Choices | Outcomes | Notes |
 |---|---|---|---|
 | The Tallow Man | 4 | 5 | Introduces the wick economy |
 | Wolves at the Treeline | 4 | 6 | Introduces stat-gated choices |
 | What the Well Keeps | 4 | 7 | The widest branch — greed vs. caution |
-| Someone Else's Fire | 4 | 4 | **Once per run.** The moral test |
+| Someone Else's Fire | 3 | 4 | **Once per run.** The moral test ("Take the pot" cut per director's ruling) |
 | The Long Room | 4 | 4 | Quiet event — pacing relief |
+| A Shape on the Road *(system demo, not gate content)* | 1 | 1 | Triggers combat against **the lean wolf** |
 
 ### Rules the engine enforces (and tests prove)
 
@@ -900,6 +925,10 @@ Five events, one biome (`roadside`), **1,917 words** of prose.
 - **Locked choices are unplayable**, not merely hidden.
 - **Resources clamp.** HP never exceeds max or falls below zero; coin and wick never go negative.
 - **Hints never spoil.** A regex test fails the build if a choice hint contains a number followed by HP/coin/damage.
+- **Combat is exact, not statistical.** Every round's damage, hit/miss, and outcome are asserted precisely against a scripted RNG — no flaky probability-based tests.
+- **A killing blow skips the enemy's reply.** Win the round outright and there's no free retaliation hit.
+- **Fleeing costs nothing on success, and never grants combat rewards.** Only a win pays out.
+- **A fight is deterministic.** Given the same seed and the same sequence of actions, a fight resolves identically every time.
 
 ## Design additions made during the build — resolved
 
@@ -920,4 +949,4 @@ All four items that were blocking step 4 are now **closed**:
 3. ✅ "Take the pot" — cut.
 4. ✅ Zod — stays at runtime until step 7 (see table above).
 
-**Step 4 (UI shell) is complete** — see the section above. Step 5 (combat) has not started and needs no further sign-off to begin under the already-approved plan.
+**Steps 4 (UI shell) and 5 (combat) are both complete** — see the sections above. Step 6 (art pipeline) needs no further sign-off to begin under the already-approved plan, but note: the illustration panel and enemy sprite are currently CSS placeholders everywhere. Step 6 is what turns those into real pixel art.
