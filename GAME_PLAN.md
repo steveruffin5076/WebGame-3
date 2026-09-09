@@ -7,7 +7,7 @@ Status:
 - [x] Phase 1 — Market research
 - [x] Phase 2 — 5-year prediction
 - [x] Phase 3 — Director interview
-- [ ] Phase 4 — Popularity analysis of chosen game
+- [x] Phase 4 — Popularity analysis of chosen game
 - [ ] Phase 5 — Tools comparison
 - [ ] Phase 6 — Visual & animation direction
 
@@ -303,5 +303,136 @@ Stated now so they never quietly creep in:
 - ❌ No user-generated content or level editor
 - ❌ No IAP (CrazyGames IAP is invite-only — it must be earned with ad performance first, per Phase 1)
 - ❌ No 3D, no WebGPU — this game does not need either
+
+---
+
+## PHASE 4 — POPULARITY ANALYSIS OF THE CHOSEN GAME
+
+**Concept under analysis:** run-based text adventure RPG, moody pixel art, grim-but-warm tone, 8–15 min permadeath runs, adults 18–34, US/English, browser (PC + mobile), $0 budget.
+
+> **A warning about the market-size numbers.** Searches for "interactive fiction market size"
+> return report-mill sites quoting **$6.4B (2025) → $14.8B (2034), 9.8% CAGR** for interactive
+> fiction, while a *different* mill quotes **$329M by 2031** for text adventure games. Those two
+> figures are irreconcilable — they differ by a factor of ~20. I am not scoring on either.
+> **[soft — report-mill, treat as noise]** The scoring below uses only the platform, portal and
+> player-behaviour data from Phases 1–2, which is verifiable.
+
+### 4.1 Score TODAY (against Phase 1 data)
+
+Scored 1–10, weighted. This is a scoring judgement, not a measurement.
+
+| Axis | Weight | Score | Reasoning from Phase 1 |
+|---|---:|---:|---|
+| **Portal / platform fit** | 20% | **4** | The weakest link. Poki and CrazyGames inventory is match-3, arcade, puzzle, `.io`. Text games are not what those portals index on or promote. *A Dark Room* proves a text game CAN break out in a browser, but it is the exception cited, not the pattern **[soft]** |
+| **Addressable audience** | 15% | **5** | Mid-core 18–34 readers are real and they pay, but on browser portals they are a minority of traffic. Coolmath/Poki skew younger and more casual |
+| **Competitive gap** | 15% | **9** | Strongest axis. Your closest competitor (*Life in Adventure*) is a **mobile app, not a browser game**. The browser text-RPG slot is close to empty. Fallen London occupies the deep end (4.5M words, long-term engagement), nobody occupies the 10-minute end **[data]** |
+| **Differentiation defensibility** | 10% | **6** | Hand-written grim-but-warm prose is a real moat, but in 2026 it is not yet a *selling point* — it's just quality |
+| **Build cost fit at $0** | 15% | **9** | Text + small sprites = no engine licence, no server, no 3D, trivial hosting. Among the cheapest buildable genres |
+| **Monetization fit** | 15% | **6** | Rewarded video between runs is the top-paying format ($15–28 eCPM US) and permadeath gives a natural, non-abusive slot. But Poki has **no publisher IAP at all**, and CrazyGames IAP is **invite-only** — you are ads-only for a while **[data]** |
+| **Discoverability / shareability** | 10% | **3** | The other weak link. A text game does not screenshot, does not GIF, and does not survive a 3-second portal thumbnail or a TikTok clip — and TikTok/YouTube are now the search engines for this audience **[data]** |
+| | | | |
+| **WEIGHTED TODAY SCORE** | | **6.1 / 10** | *Cheap to build, wide-open gap, hard to get seen.* |
+
+### 4.2 Score over the NEXT 5 YEARS (against Phase 2 predictions)
+
+| Axis | Weight | Score | Reasoning from Phase 2 |
+|---|---:|---:|---|
+| **Portal / platform fit** | 20% | **5** | ▲ slightly. Portals keep paying on retention, and run-based games retain. But WebGPU normalizing 3D (S1) means the *visual* bar on portals rises — text stands further apart, for better and worse |
+| **Addressable audience** | 15% | **6** | ▲ Short-session, daily-habit play was my HIGH-confidence growth call. An 8–15 min run fits the gap that short-form video is training people to have |
+| **Competitive gap** | 15% | **7** | ▼ from 9. Gaps close. Cheap AI-assisted text games are exactly what a third of the market is now shipping (S2) — expect the slot to get crowded, though mostly with slop |
+| **Differentiation defensibility** | 10% | **9** | ▲▲ Biggest mover. "Visibly human" was a MEDIUM-HIGH growth call: 85% of players hostile to AI, developer sentiment 30%→52% negative in one year. By ~2029 hand-written is a *marketing position*, not just quality **[data]** |
+| **Build cost fit at $0** | 15% | **9** | ▬ Unchanged. Text stays cheap forever |
+| **Monetization fit** | 15% | **7** | ▲ Hybrid (ads + light IAP) becomes the default (HIGH confidence, S4). Once ad performance earns CrazyGames IAP access, cosmetic/content purchases open up. Useful reference: **Fallen London earns only ~30–35% of revenue from action refreshes** — i.e. even a famous energy-gated text game makes most of its money elsewhere. Don't build the game around an energy meter **[data]** |
+| **Discoverability / shareability** | 10% | **4** | ▲ marginally, and only if you *design for it*. Social-by-default was a HIGH-confidence call (Gen Z 33% more likely to play for social reasons) — but text does not go viral by accident |
+| | | | |
+| **WEIGHTED 5-YEAR SCORE** | | **6.7 / 10** | *Improves with age, mainly because the AI backlash turns your weakness into your brand.* |
+
+**Reading the two scores:** 6.1 → 6.7 is a concept whose fundamentals get *better* over time while its distribution problem stays. Both scores are dragged down by the same two axes — **portal fit (20%)** and **discoverability (10%)**. Fix those two and the same game scores ~7.6 today. That is what the next section is for.
+
+### 4.3 Three design changes that would raise the odds
+
+These are targeted at the two weak axes. Ranked by impact per unit of work.
+
+#### Change 1 — Add a **Daily Delve**: one seeded run per day, global leaderboard
+Every player gets the **same seed** for 24 hours. Same events, same enemies, same loot rolls — so scores are directly comparable. Resets at midnight. Separate from the freeplay mode.
+
+- **Fixes:** discoverability (3→6) *and* portal fit (4→6). Portals rank on retention and return visits; a daily reset is the single strongest return hook known to browser gaming.
+- **Why it works:** Phase 1 showed daily puzzles (Wordle, Connections, Mini, Strands) make up an enormous slice of casual browser play. That is a *format*, not a genre — you can borrow it. Phase 2 rated short-session daily-habit games HIGH confidence for growth.
+- **Cost:** low. Seeded RNG plus a score table. No server needed at first — local leaderboard v1, hosted later.
+- **Bonus:** solves the ad slot cleanly. One rewarded video for a single "second chance" per daily run, and that's it.
+
+#### Change 2 — Make the game **legible in three seconds**
+Text games die in thumbnails. Fix it at the presentation layer, not the writing layer: a persistent framed illustration panel above the prose, an animated character portrait that reacts (damage flash, wound overlays, torch flicker), visible HP/stat bars, and combat that *animates* rather than printing a result line.
+
+- **Fixes:** discoverability (3→6), portal fit (4→6).
+- **Why it works:** *Life in Adventure*'s reviews specifically praised its little animated combat sequence and HUD **[soft]**. That is the proven trick — it is what makes a text game read as a *game*. Meanwhile TikTok/YouTube are the discovery engines for your audience (Phase 2, S3); you need 3 seconds of motion that says "RPG".
+- **Cost:** medium. This is the main art and animation cost of the project, and it is worth it.
+
+#### Change 3 — End every run with a shareable **epitaph card**
+On death or ending, generate a single image: your character portrait, name, class, cause of death, final score, rank, and 3 run stats ("41 choices made · 2 companions lost · died to a wolf, 8 minutes in"). One-tap copy/download/share.
+
+- **Fixes:** shareability directly; it is your only free user-acquisition channel.
+- **Why it works:** Phase 2 rated social-by-default HIGH confidence. This is the cheapest possible version of a social hook — no accounts, no server, no multiplayer (all v1 non-goals stay intact). It turns your *ending* into your *advertisement*, and it pairs perfectly with the Daily Delve (comparable scores → people post them).
+- **Cost:** low. Canvas render to PNG.
+
+> Changes 1 and 3 are designed to compound: a daily seeded run makes scores comparable, and an epitaph card makes them postable. Neither works nearly as well alone.
+
+### 4.4 Biggest risks
+
+Ordered by expected damage.
+
+| # | Risk | Severity | Honest assessment | Mitigation |
+|---|---|---|---|---|
+| 1 | **Portals may simply not feature it** | 🔴 High | This is the one that kills the project quietly. Poki and CrazyGames curate, and a text game is off-pattern for them. You could build something good and get no traffic | Do not bet on one channel. Ship to **itch.io** (the indie discovery layer) + your **own PWA on GitHub Pages** + submit to CrazyGames. Treat portal acceptance as upside, not as the plan |
+| 2 | **Repetition — the exact thing that sank the competitor** | 🔴 High | *Life in Adventure*'s #1 complaint is that re-runs surface the same encounters fast. A roguelite makes this risk **worse**, not better, because replay is the whole point | Events must be data with **tags, prerequisites and weights**, never hardcoded sequences. Target: 50 events → hundreds of distinct run shapes. This is an architecture decision made in week 1, not a fix applied later |
+| 3 | **Writing volume is the real bottleneck** | 🟠 Med-High | Not code. The slice needs 40–60 events; a full game needs 300–500. At mid-core length (200–400 words each) that is 60,000–200,000 words. That is a novel | Write in event *families* that share structure; build the content tooling before the content. Accept that content ships continuously post-launch |
+| 4 | **AI-writing perception** | 🟠 Med-High | Text is the most fakeable medium there is, and 85% of players are hostile to AI content **[data]**. If the prose reads generic, that sentiment lands on you regardless of process | You are the director and editor — every event gets read and revised by you. Disclose honestly. The grim-but-warm tone is chosen precisely because warmth is the hardest thing to fake |
+| 5 | **Revenue ceiling is low for a long time** | 🟠 Medium | Poki: no IAP. CrazyGames: IAP invite-only, must be earned with ad performance first **[data]**. Realistically you are on rewarded video alone for months | Design the rewarded slot honestly from day one (between runs, opt-in, never mid-prose) so ad performance is *good*, which is what unlocks IAP later. A $300–800 non-exclusive licence is a realistic interim outcome |
+| 6 | **Market saturation** | 🟡 Low-Med | Low today — the browser text-RPG slot is close to empty. Rising, as cheap AI-assisted narrative games flood in | Your defence is quality and the daily hook, not being first |
+| 7 | **Mobile performance** | 🟢 Very Low | Text plus a handful of low-res sprites. This is the least demanding thing you could possibly build. Phase 1's mobile-thermal warnings apply to 3D open worlds, not to this | None needed. Genuinely a non-issue |
+
+**Note on the risk profile:** every high risk here is a *design or distribution* risk. There is no technical risk worth naming. That is exactly the right shape for a director-plus-AI-coder team — the risks land in your area of judgement, not in mine.
+
+### 4.5 Final verdict
+
+> ## ✅ BUILD — WITH MODIFICATIONS
+>
+> **Build the game as scoped in Phase 3, plus the three changes in 4.3 folded into the vertical slice, not deferred.**
+
+**Why build:**
+- Cheapest genre on your list to produce, with the widest open competitive gap (browser text RPG is close to unoccupied).
+- The competitor's four loudest complaints — repetition, vague choices, ad abuse, weak main quest — are all fixable with **writing and restraint**, which is the one resource you have infinitely and for free.
+- Score improves over five years (6.1 → 6.7) because the AI backlash converts hand-written prose from "quality" into "brand".
+- Zero technical risk. Zero hosting cost. Runs on any phone.
+
+**Why with modifications, not as-is:**
+- As-is, this concept scores **6.1** and its two weakest axes are both about *being seen*, not about *being good*. A well-written game nobody finds is a failed project.
+- The Daily Delve, the 3-second legibility pass, and the epitaph card address both weak axes for a modest amount of work. With them the same concept scores roughly **7.6 today**.
+
+**What would change the verdict to "reconsider":** if you were planning to depend on Poki or CrazyGames acceptance as your primary distribution. You are not — itch.io plus your own PWA is the base case, portals are upside.
+
+**Revised vertical slice definition** (adds to Phase 3, row 6 — this is the only addition, and per your Phase 3 answer the list is now closed):
+
+| Slice contents | |
+|---|---|
+| One biome | ~40–60 tagged, weighted events |
+| One enemy tier | 3 character classes |
+| 2 endings | Full run loop, permadeath, meta-progression stub |
+| **+ Daily Delve mode** | seeded run, local leaderboard |
+| **+ Framed illustration panel** | animated portrait, HP/stat bars, animated combat |
+| **+ Epitaph card** | canvas-rendered PNG, one-tap share |
+| Rewarded ad slot | between runs only, opt-in |
+
+---
+
+### Phase 4 sources
+
+- [FRVR — The Best Browser Games to Play in 2026](https://frvr.com/blog/guides/best-browser-games/) (Fallen London, A Dark Room as browser text-game reference points)
+- [Failbetter Games — Why is Fallen London still free-to-play?](https://www.failbettergames.com/news/why-is-fallen-london-still-free-to-play) (~30–35% of revenue from action refreshes)
+- [Failbetter Games — Fallen London](https://www.failbettergames.com/games/fallen-london) (4.5M words, browser-playable)
+- [Impulse Media Hub — Web-Native Game Distribution in 2026](https://www.impulsemediahub.com/blog/web-native-games-rising/) (portal→PWA hybrid, daily rewards and save-state continuity as retention levers)
+- [Cinevva — CrazyGames Developer Guide (2026)](https://app.cinevva.com/guides/publish-game-crazygames) (60% ad / 70% IAP split, invite-only IAP)
+- Phase 1 and Phase 2 sources above (portal rankings, eCPM rates, AI-sentiment data, demographic data)
+- ⚠️ Deliberately **not** used for scoring: [Growth Market Reports — Interactive Fiction Market](https://growthmarketreports.com/report/interactive-fiction-market) and [openPR — Text Adventure Games Market](https://www.openpr.com/news/4425020/text-adventure-games-market-set-for-robust-growth-targeting) — mutually contradictory report-mill figures, listed only for transparency
 
 ---
