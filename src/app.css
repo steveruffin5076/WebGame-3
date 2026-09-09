@@ -1,32 +1,88 @@
-/* Scaffold styling only. The designed UI (framed panel, pixel art, animated
-   combat) is Phase 6 work and belongs to step 4 — not started. */
+/* Step 4 UI shell — Phase 6 spec (GAME_PLAN.md ## PHASE 6).
+   Illustration art itself is step 6; everything else here (palette, frame,
+   typography, layout, touch targets) follows the approved spec now. */
+
+@font-face {
+  font-family: 'Press Start 2P';
+  src: url('./assets/fonts/press-start-2p.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
+  /* Ink ramp — shadow, line, void */
   --ink-0: #0b0a0c;
   --ink-1: #17151a;
   --ink-2: #241f27;
   --ink-3: #383040;
+  --ink-4: #55495c;
+  --ink-5: #7a6b80;
+
+  /* Cool ramp — stone, steel, night, fog */
+  --cool-0: #1c2430;
+  --cool-1: #2b3745;
+  --cool-2: #3d4d5c;
+  --cool-3: #566a78;
   --cool-4: #7a8c96;
+  --cool-5: #a8b6bb;
+
+  /* Warm ramp — skin, wood, leather, rope */
+  --warm-0: #2a1e18;
+  --warm-1: #3f2c21;
+  --warm-2: #5a3f2c;
+  --warm-3: #7a583c;
   --warm-4: #9c7a55;
+  --warm-5: #c2a179;
+
+  /* Accents — one per illustration, never two */
   --accent-blood: #8f1f2e;
   --accent-torch: #e0913a;
-  --text: #e8e2d4;
-  --text-muted: #b5ad99;
+  --accent-poison: #5f8f4a;
+
+  /* UI reserved */
+  --ui-text: #e8e2d4;
+  --ui-text-muted: #b5ad99;
+  --ui-critical: #d94f4f;
+
+  --font-serif: Georgia, 'Times New Roman', serif;
+  --font-pixel: 'Press Start 2P', ui-monospace, monospace;
+
   color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
 
+html, body { height: 100%; }
+
 body {
   margin: 0;
   background: var(--ink-1);
-  color: var(--text);
-  font-family: Georgia, 'Times New Roman', serif;
+  color: var(--ui-text);
+  font-family: var(--font-serif);
   font-size: 17px;
   line-height: 1.6;
 }
 
 #app {
-  max-width: 65ch;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  max-width: 640px;
   margin: 0 auto;
-  padding: 1.5rem 1.25rem calc(2rem + env(safe-area-inset-bottom));
+  padding: 1rem 1.25rem calc(1rem + env(safe-area-inset-bottom));
+}
+
+.pixel {
+  font-family: var(--font-pixel);
+  line-height: 1.8;
+}
+
+/* Touch targets: 48x48 minimum everywhere, no exceptions. */
+button, input, select {
+  min-height: 48px;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
 }

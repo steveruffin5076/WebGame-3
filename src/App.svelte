@@ -11,11 +11,16 @@
     type RunState,
   } from './lib/engine/run';
   import { dailySeedString } from './lib/engine/rng';
+  import IllustrationPanel from './lib/ui/IllustrationPanel.svelte';
+  import Hud from './lib/ui/Hud.svelte';
+  import ChoiceButton from './lib/ui/ChoiceButton.svelte';
+  import ConfirmOverlay from './lib/ui/ConfirmOverlay.svelte';
 
   let seed = $state(dailySeedString());
   let classId = $state(CLASSES[0]!.id);
   let run = $state<RunState | null>(null);
   let tick = $state(0);
+  let confirmingAbandon = $state(false);
 
   const options = $derived(run && run.phase === 'event' ? visibleChoices(run) : []);
 
@@ -35,11 +40,53 @@
     advance(run, ALL_EVENTS);
     tick++;
   }
+
+  function abandon() {
+    run = null;
+    confirmingAbandon = false;
+  }
+
+  /**
+   * Keyboard support (Phase 6 spec): 1-9 select choices, Space/Enter
+   * advance, Esc opens the abandon-run menu. Ignored while a form field
+   * has focus so typing a seed never triggers a shortcut.
+   */
+  function onKeydown(e: KeyboardEvent) {
+    const target = e.target as HTMLElement | null;
+    if (target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName)) return;
+    if (!run) return;
+
+    if (e.key === 'Escape') {
+      confirmingAbandon = !confirmingAbandon;
+      e.preventDefault();
+      return;
+    }
+    if (confirmingAbandon) return;
+
+    if (run.phase === 'event') {
+      const n = Number(e.key);
+      if (Number.isInteger(n) && n >= 1 && n <= options.length) {
+        const option = options[n - 1]!;
+        if (!option.locked) {
+          take(option.index);
+          e.preventDefault();
+        }
+      }
+      return;
+    }
+
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      if (run.phase === 'outcome') next();
+      else if (isOver(run)) run = null;
+    }
+  }
 </script>
 
+<svelte:window onkeydown={onKeydown} />
+
 <header>
-  <h1>Wickmarrow</h1>
-  <p class="sub">Scaffold reader — engine and content only. No art, no designed UI yet.</p>
+  <h1 class="pixel">WICKMARROW</h1>
 </header>
 
 {#if !run}
@@ -61,111 +108,118 @@
   </section>
 {:else}
   {#key tick}
-    <section class="hud">
-      <span>Depth {run.depth}</span>
-      <span class:low={run.hp <= 3}>Health {run.hp}/{run.maxHp}</span>
-      <span class:low={run.wick <= 3}>Wick {run.wick}</span>
-      <span>Coin {run.coin}</span>
-      <span>M{run.stats.might} · W{run.stats.wits} · H{run.stats.heart}</span>
-    </section>
+    <Hud
+      depth={run.depth}
+      hp={run.hp}
+      maxHp={run.maxHp}
+      wick={run.wick}
+      coin={run.coin}
+      might={run.stats.might}
+      wits={run.stats.wits}
+      heart={run.stats.heart}
+    />
 
-    {#if run.phase === 'event' && run.currentEvent}
-      <article>
-        <h2>{run.currentEvent.title}</h2>
-        {#each run.currentEvent.body.split('\n\n') as para}
-          <p>{para}</p>
-        {/each}
-      </article>
-      <nav>
-        {#each options as option (option.index)}
-          <button
-            class="choice"
-            disabled={option.locked}
-            onclick={() => take(option.index)}
-          >
-            <span class="label">{option.choice.label}</span>
-            {#if option.locked && option.choice.lockedReason}
-              <span class="hint locked">{option.choice.lockedReason}</span>
-            {:else if option.choice.hint}
-              <span class="hint">{option.choice.hint}</span>
-            {/if}
-          </button>
-        {/each}
-      </nav>
-    {:else if run.phase === 'outcome' && run.pendingOutcome}
-      <article class="outcome">
-        {#each run.pendingOutcome.text.split('\n\n') as para}
-          <p>{para}</p>
-        {/each}
-      </article>
-      <nav>
-        <button class="choice" onclick={next}><span class="label">Go on.</span></button>
-      </nav>
-    {:else if isOver(run)}
-      <article class="outcome">
-        {#if run.pendingOutcome}
+    <main>
+      {#if run.phase === 'event' && run.currentEvent}
+        <IllustrationPanel biome={run.currentEvent.biome} tags={run.currentEvent.tags} />
+        <article>
+          <h2>{run.currentEvent.title}</h2>
+          {#each run.currentEvent.body.split('\n\n') as para}
+            <p>{para}</p>
+          {/each}
+        </article>
+      {:else if run.phase === 'outcome' && run.pendingOutcome}
+        <article class="outcome">
           {#each run.pendingOutcome.text.split('\n\n') as para}
             <p>{para}</p>
           {/each}
-        {/if}
-        <hr />
-        <h2>{run.ending ? 'The road ends.' : 'You do not get up.'}</h2>
-        <p class="epitaph">
-          {CLASSES.find((c) => c.id === run?.classId)?.name} ·
-          depth {run.depth} ·
-          {run.causeOfDeath ?? 'survived'} ·
-          score {scoreRun(run)}
-        </p>
-        <p class="epitaph muted">{run.log.length} choices made · seed “{run.seed}”</p>
-      </article>
-      <nav>
-        <button class="choice" onclick={() => (run = null)}><span class="label">Again.</span></button>
-      </nav>
-    {/if}
+        </article>
+      {:else if isOver(run)}
+        <article class="outcome">
+          {#if run.pendingOutcome}
+            {#each run.pendingOutcome.text.split('\n\n') as para}
+              <p>{para}</p>
+            {/each}
+          {/if}
+          <hr />
+          <h2>{run.ending ? 'The road ends.' : 'You do not get up.'}</h2>
+          <p class="epitaph pixel">
+            {CLASSES.find((c) => c.id === run?.classId)?.name} ·
+            depth {run.depth} ·
+            {run.causeOfDeath ?? 'survived'} ·
+            score {scoreRun(run)}
+          </p>
+          <p class="epitaph muted">{run.log.length} choices made · seed “{run.seed}”</p>
+        </article>
+      {/if}
+    </main>
+
+    <nav>
+      {#if run.phase === 'event'}
+        {#each options as option, i (option.index)}
+          <ChoiceButton
+            label={option.choice.label}
+            hint={option.choice.hint}
+            locked={option.locked}
+            lockedReason={option.choice.lockedReason}
+            shortcut={i + 1}
+            onSelect={() => take(option.index)}
+          />
+        {/each}
+      {:else if run.phase === 'outcome'}
+        <ChoiceButton label="Go on." onSelect={next} />
+      {:else if isOver(run)}
+        <ChoiceButton label="Again." onSelect={() => (run = null)} />
+      {/if}
+    </nav>
   {/key}
+
+  {#if confirmingAbandon}
+    <ConfirmOverlay
+      message="Abandon this run? Depth and progress will be lost."
+      confirmLabel="Abandon"
+      onConfirm={abandon}
+      onCancel={() => (confirmingAbandon = false)}
+    />
+  {/if}
 {/if}
 
 <style>
-  header { border-bottom: 1px solid var(--ink-3); padding-bottom: 0.75rem; margin-bottom: 1.5rem; }
-  h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0.02em; }
-  .sub { color: var(--text-muted); font-size: 0.85rem; margin: 0.35rem 0 0; font-style: italic; }
-  h2 { font-size: 1.15rem; margin: 0 0 0.75rem; color: var(--warm-4); }
+  header { border-bottom: 1px solid var(--ink-3); padding-bottom: 0.75rem; margin-bottom: 1rem; }
+  h1 { font-size: 1rem; margin: 0; letter-spacing: 0.04em; color: var(--ui-text); }
+  h2 { font-size: 1.15rem; margin: 1rem 0 0.75rem; color: var(--warm-5); }
 
   .setup { display: flex; flex-direction: column; gap: 1rem; }
-  label { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.85rem; color: var(--text-muted); }
+  label { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.85rem; color: var(--ui-text-muted); }
   input, select {
-    background: var(--ink-0); color: var(--text); border: 1px solid var(--ink-3);
-    padding: 0.6rem; font: inherit; font-size: 1rem; border-radius: 2px; min-height: 48px;
+    background: var(--ink-0); color: var(--ui-text); border: 1px solid var(--ink-3);
+    padding: 0.6rem; font: inherit; font-size: 1rem; border-radius: 2px;
   }
-  .blurb { color: var(--text-muted); font-style: italic; margin: 0; }
+  .blurb { color: var(--ui-text-muted); font-style: italic; margin: 0; }
 
-  .hud {
-    display: flex; flex-wrap: wrap; gap: 0.35rem 1rem;
-    font-family: ui-monospace, monospace; font-size: 0.8rem;
-    color: var(--cool-4); border-bottom: 1px solid var(--ink-2);
-    padding-bottom: 0.6rem; margin-bottom: 1.25rem;
+  main {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
-  .low { color: var(--accent-blood); }
-
   article p { margin: 0 0 1rem; }
-  .outcome p { color: var(--text-muted); }
+  .outcome p { color: var(--ui-text-muted); }
   hr { border: none; border-top: 1px solid var(--ink-3); margin: 1.5rem 0; }
-  .epitaph { font-family: ui-monospace, monospace; font-size: 0.8rem; color: var(--accent-torch); }
-  .epitaph.muted { color: var(--text-muted); }
+  .epitaph { font-size: 0.7rem; color: var(--accent-torch); line-height: 1.8; }
+  .epitaph.muted { font-family: var(--font-serif); font-size: 0.85rem; color: var(--ui-text-muted); }
 
-  nav { display: flex; flex-direction: column; gap: 12px; margin-top: 1.5rem; }
-  .choice {
-    display: flex; flex-direction: column; gap: 0.2rem; align-items: flex-start;
-    width: 100%; min-height: 56px; padding: 0.75rem 1rem; text-align: left;
-    background: var(--ink-2); color: var(--text);
-    border: 1px solid var(--ink-3); border-radius: 2px;
-    font: inherit; cursor: pointer;
+  nav {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 1rem;
+    flex: none;
   }
-  .choice:hover:not(:disabled) { border-color: var(--warm-4); }
-  .choice:disabled { opacity: 0.45; cursor: not-allowed; }
-  .label { font-size: 1rem; }
-  .hint { font-size: 0.8rem; color: var(--text-muted); font-style: italic; }
-  .hint.locked { color: var(--accent-blood); }
 
-  .primary { min-height: 56px; background: var(--ink-3); color: var(--text); border: 1px solid var(--warm-4); font: inherit; font-size: 1rem; border-radius: 2px; cursor: pointer; }
+  .primary {
+    min-height: 56px; background: var(--ink-3); color: var(--ui-text);
+    border: 1px solid var(--warm-4); font: inherit; font-size: 1rem;
+    border-radius: 2px; cursor: pointer;
+  }
 </style>

@@ -819,11 +819,11 @@ Steps 4–9 remain unstarted until the gate is passed.
 | | |
 |---|---|
 | **Branch** | `claude/start-plan-review-lxci8x` |
-| **Steps complete** | **1, 2, 3** of 9 |
-| **Current state** | ⏸ **Paused at the content gate.** Director must read the five events and judge the voice |
+| **Steps complete** | **1, 2, 3, 4** of 9 |
+| **Current state** | ✅ **Voice gate passed 2026-09-09.** Step 4 (UI shell) complete. Step 5 (combat) not yet started |
 | **Tests** | **32 / 32 passing** (`tests/rng` 10 · `tests/run` 14 · `tests/content` 8) |
-| **Type check** | 181 files · **0 errors · 0 warnings** |
-| **Bundle** | 119.66 kB raw / **37.04 kB gzipped** JS · 2.71 kB CSS |
+| **Type check** | 185 files · **0 errors · 0 warnings** |
+| **Bundle** | 123.52 kB raw / **38.59 kB gzipped** JS · 5.57 kB CSS (1.86 kB gz) · 12.48 kB pixel webfont |
 
 ## Step-by-step status
 
@@ -833,14 +833,39 @@ Steps 4–9 remain unstarted until the gate is passed.
 | 2 | Run engine — seeded PRNG, Zod schema, state machine, determinism proof | ✅ Done | `src/lib/engine/*` · 32 tests |
 | 3 | Event schema + 5 sample events | ✅ Done | `src/lib/content/events/roadside.json` |
 | — | **GATE — director reads the five events** | ⏸ **Open** | Awaiting your verdict on the voice |
-| 4 | UI shell — illustration panel, prose, bottom-anchored choices, HUD | ⬜ Not started | Blocked by gate |
+| 4 | UI shell — illustration panel, prose, bottom-anchored choices, HUD | ✅ Done | `src/lib/ui/*`, `src/App.svelte`, `src/app.css` |
 | 5 | Combat | ⬜ Not started | Blocked by gate |
 | 6 | Art pipeline — first 5 illustrations, palette quantized | ⬜ Not started | Blocked by gate |
 | 7 | Content pass to 40–60 events | ⬜ Not started | Blocked by gate |
 | 8 | Daily Delve + epitaph card | ⬜ Not started | Blocked by gate |
 | 9 | Ad adapter + portal build | ⬜ Not started | Blocked by gate |
 
-## What was built
+## Step 4 — UI shell (2026-09-09)
+
+Director's voice verdict on the five gate events: **good — approved to proceed.**
+
+Built to the Phase 6 spec, with the caveat that real illustrations don't exist
+yet (that's step 6). Everything else in the spec that doesn't depend on art
+is in place now:
+
+| Spec item | Status | Notes |
+|---|---|---|
+| 24-colour master palette | ✅ | Full ink/cool/warm/accent/UI ramps as CSS custom properties in `app.css` |
+| Pixel font for headers/HUD/numerals | ✅ | Press Start 2P (OFL-licensed, free), self-hosted as a 12.5 kB woff2 — no external font request at runtime |
+| Readable serif for body prose | ✅ | Kept the system Georgia/Times stack — already meets the 17–18 px / 65ch spec at zero extra bundle cost |
+| Framed illustration panel | ✅ (placeholder) | `IllustrationPanel.svelte` — biome-toned gradient + single-accent torch flicker in a pixel-frame border. Built to accept real art later without changing any caller |
+| Torch flicker animation | ✅ | `transform`/`opacity`-safe (`box-shadow`/`filter` untouched), honours `prefers-reduced-motion` |
+| Bottom-anchored choices | ✅ | Flex column layout: HUD fixed top, prose scrolls in the middle, choices sit after it — naturally in the thumb-reach zone, `env(safe-area-inset-bottom)` padding for the home indicator |
+| Choice buttons: 56 px min-height, 12 px gap | ✅ | `ChoiceButton.svelte` |
+| Touch targets: 48×48 minimum | ✅ | Global rule in `app.css` |
+| Keyboard: 1–9 select, Space/Enter advance, Esc menu | ✅ | Ignored while a text field has focus, so typing a seed never fires a shortcut |
+| Hover never carries information | ✅ | Border highlight only, decorative |
+
+New files: `src/lib/ui/IllustrationPanel.svelte`, `Hud.svelte`, `ChoiceButton.svelte`, `ConfirmOverlay.svelte` (the Esc "abandon run" menu). `App.svelte` now orchestrates these instead of inlining the whole layout.
+
+**Verified, not assumed:** screenshotted the setup screen, a live event, and the choice list at both a 390×844 phone viewport and a 900×700 desktop viewport; drove a full choice → outcome → next-event cycle by keyboard alone (`1` then `Enter`) and confirmed it transitions correctly. 32/32 tests still pass; 0 type errors; build is clean.
+
+**Deferred to later steps, on purpose:** reacting portraits and damage numbers need art (step 6) and combat (step 5) respectively. Character-by-character text reveal (typewriter) is a nice-to-have from the animation spec, not deferred for a technical reason — cut for now to keep step 4 scoped to structure; can be added cheaply whenever you want it.
 
 ### Code shipped
 
@@ -876,9 +901,9 @@ Five events, one biome (`roadside`), **1,917 words** of prose.
 - **Resources clamp.** HP never exceeds max or falls below zero; coin and wick never go negative.
 - **Hints never spoil.** A regex test fails the build if a choice hint contains a number followed by HP/coin/damage.
 
-## Design additions made during the build — awaiting your ruling
+## Design additions made during the build — resolved
 
-These went beyond the approved plan. Each is reversible; say the word.
+These went beyond the approved plan. All three are now decided.
 
 | # | Addition | What it is | Why | Cost to remove |
 |---|---|---|---|---|
@@ -886,8 +911,13 @@ These went beyond the approved plan. Each is reversible; say the word.
 | 2 | **"Take the pot"** in *Someone Else's Fire* | You may rob a woman who cannot stand up. +4 HP, +3 coin, −2 Heart, and a permanent flag | It is the sharpest "grim but warm" test in the five — warmth means nothing if cruelty is not on the menu | ✅ **Decided 2026-09-09: CUT** — removed from `roadside.json`. Event now has 3 choices |
 | 3 | **Zod at runtime** | Zod is **~30 kB of the 37 kB gzipped bundle** | Loud failures during content authoring | ✅ **Decided 2026-09-09: keep at runtime now, move to build-time at step 7** once the schema settles → bundle drops to roughly 7 kB gzipped |
 
-## What I need from you to unblock step 4
+## Step 4 gate — resolved
 
-1. **The voice verdict.** Read the five events. Is the grimness landing without being miserable, and is the warmth landing without being soft? If it's close but off, name the event that's *closest* to right and I'll calibrate to that one rather than guessing.
+All four items that were blocking step 4 are now **closed**:
 
-Additions 1–3 are all **resolved** — see table above. Wick stays, "Take the pot" is cut, Zod stays at runtime until step 7.
+1. ✅ **Voice verdict: good.** Approved to proceed 2026-09-09.
+2. ✅ Wick — kept.
+3. ✅ "Take the pot" — cut.
+4. ✅ Zod — stays at runtime until step 7 (see table above).
+
+**Step 4 (UI shell) is complete** — see the section above. Step 5 (combat) has not started and needs no further sign-off to begin under the already-approved plan.
