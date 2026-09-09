@@ -884,7 +884,7 @@ These went beyond the approved plan. Each is reversible; say the word.
 |---|---|---|---|---|
 | 1 | **Wick** | A light resource. Burns 1 per step deeper. At zero, the dark costs 1 HP per step | Gives depth a rising cost, so "go deeper" is a real decision instead of a free button | ~1 hour. Touches schema, run state and 2 events |
 | 2 | **"Take the pot"** in *Someone Else's Fire* | You may rob a woman who cannot stand up. +4 HP, +3 coin, −2 Heart, and a permanent flag | It is the sharpest "grim but warm" test in the five — warmth means nothing if cruelty is not on the menu | 10 minutes. Delete one choice block |
-| 3 | **Zod at runtime** | Zod is **~30 kB of the 37 kB gzipped bundle** | Loud failures during content authoring | Move validation to build time once the schema settles → bundle drops to roughly 7 kB gzipped. Recommend doing this at step 7, not now |
+| 3 | **Zod at runtime** | Zod is **~30 kB of the 37 kB gzipped bundle** | Loud failures during content authoring | ✅ **Decided 2026-09-09: keep at runtime now, move to build-time at step 7** once the schema settles → bundle drops to roughly 7 kB gzipped |
 
 ## What I need from you to unblock step 4
 
@@ -892,4 +892,4 @@ These went beyond the approved plan. Each is reversible; say the word.
 2. **Keep or cut the wick** (addition 1).
 3. **Keep or cut "Take the pot"** (addition 2).
 
-Addition 3 is my call to make later; it's logged here so it isn't forgotten.
+Addition 3 (Zod at runtime) is **resolved** — see table above.
